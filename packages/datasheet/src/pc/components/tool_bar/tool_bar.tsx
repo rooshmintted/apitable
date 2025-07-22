@@ -25,6 +25,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { shallowEqual, useDispatch } from 'react-redux';
 import { colorVars, TextButton, useThemeColors } from '@apitable/components';
+import { Message } from 'pc/components/common';
 import {
   CollaCommandName,
   DATASHEET_ID,
@@ -250,6 +251,142 @@ const ToolbarBase = () => {
       // } else {
       //   appendRowCallback(newRecordId);
       // }
+    }
+  };
+
+  // Split transactions function
+  const splitTransactions = () => {
+    const state = store.getState();
+    const view = Selectors.getCurrentView(state)!;
+    const snapshot = Selectors.getSnapshot(state)!;
+    const visibleRows = Selectors.getVisibleRows(state);
+    
+    // Find fields by name
+    let productsFieldId: string | null = null;
+    let reconciledFieldId: string | null = null;
+    let amountFieldId: string | null = null;
+    let txidFieldId: string | null = null;
+    
+    // Search for fields by name
+    for (const [fieldId, field] of Object.entries(fieldMap)) {
+      if (field.name === 'Products' && field.type === FieldType.OneWayLink) {
+        productsFieldId = fieldId;
+      } else if (field.name === 'Reconciled' && field.type === FieldType.Checkbox) {
+        reconciledFieldId = fieldId;
+      } else if (field.name === 'Amount' && field.type === FieldType.Number) {
+        amountFieldId = fieldId;
+      } else if (field.name === 'TXID' && field.type === FieldType.SingleText) {
+        txidFieldId = fieldId;
+      }
+    }
+    
+    if (!productsFieldId) {
+      Message.warning({ content: 'Products field not found. Please ensure you have a field named "Products" with type OneWayLink.' });
+      return;
+    }
+    
+    // Collect records to split
+    const recordsToSplit: Array<{ recordId: string; index: number }> = [];
+    
+    visibleRows.forEach((row, index) => {
+      const record = snapshot.recordMap[row.recordId];
+      if (!record) return;
+      
+      const productsValue = record.data[productsFieldId] as string[] | null;
+      const reconciledValue = reconciledFieldId ? record.data[reconciledFieldId] as boolean : false;
+      
+      // Check if record has multiple products and is not reconciled
+      if (productsValue && Array.isArray(productsValue) && productsValue.length > 1 && !reconciledValue) {
+        recordsToSplit.push({ recordId: row.recordId, index });
+      }
+    });
+    
+    if (recordsToSplit.length === 0) {
+      Message.info({ content: 'No records found that need splitting. Records must have multiple products and be unreconciled.' });
+      return;
+    }
+    
+    // Process each record that needs splitting
+    const allNewRecords: Array<{ index: number; cellValues: { [fieldId: string]: any } }> = [];
+    
+    recordsToSplit.forEach(({ recordId, index }) => {
+      const record = snapshot.recordMap[recordId];
+      if (!record) return;
+      
+      const productsValue = record.data[productsFieldId] as string[];
+      const amountValue = amountFieldId ? (record.data[amountFieldId] as number) : null;
+      const splitAmount = amountValue ? amountValue / productsValue.length : null;
+      
+      // First, update the parent record with its own TXID if the field exists
+      if (txidFieldId && !record.data[txidFieldId]) {
+        const updateResult = resourceService.instance!.commandManager.execute({
+          cmd: CollaCommandName.SetRecords,
+          data: [{
+            recordId: recordId,
+            fieldId: txidFieldId,
+            value: recordId
+          }]
+        });
+      }
+      
+      // Create new records for each product
+      productsValue.forEach((productId, productIndex) => {
+        const newRecordData: { [fieldId: string]: any } = {};
+        
+        // Copy all field values except products, amount, and TXID
+        for (const [fieldId, value] of Object.entries(record.data)) {
+          if (fieldId !== productsFieldId && fieldId !== amountFieldId && fieldId !== txidFieldId) {
+            newRecordData[fieldId] = value;
+          }
+        }
+        
+        // Set single product
+        newRecordData[productsFieldId] = [productId];
+        
+        // Set split amount if amount field exists
+        if (amountFieldId && splitAmount !== null) {
+          newRecordData[amountFieldId] = splitAmount;
+        }
+        
+        // Set TXID to parent record ID if field exists
+        if (txidFieldId) {
+          newRecordData[txidFieldId] = recordId;
+        }
+        
+        // Add to array of new records, inserting after the original record
+        allNewRecords.push({
+          index: index + productIndex + 1,
+          cellValues: newRecordData
+        });
+      });
+    });
+    
+    // Sort by index in reverse order to maintain correct positions
+    allNewRecords.sort((a, b) => b.index - a.index);
+    
+    // Execute commands to add all new records
+    let successCount = 0;
+    allNewRecords.forEach(({ index, cellValues }) => {
+      const result = resourceService.instance!.commandManager.execute({
+        cmd: CollaCommandName.AddRecords,
+        count: 1,
+        viewId: view.id,
+        index: index,
+        cellValues: [cellValues]
+      });
+      
+      if (result.result === ExecuteResult.Success) {
+        successCount++;
+      }
+    });
+    
+    // Show success notification with count of records created
+    if (successCount > 0) {
+      Message.success({ 
+        content: `Successfully split ${recordsToSplit.length} record${recordsToSplit.length > 1 ? 's' : ''} into ${successCount} new records!` 
+      });
+    } else {
+      Message.error({ content: 'Failed to split records. Please try again.' });
     }
   };
 
@@ -559,6 +696,17 @@ const ToolbarBase = () => {
             icon={<AddCircleOutlined size={16} color={colors.secondLevelText} className={styles.toolIcon} />}
             text={isGanttView ? t(Strings.gantt_add_record) : t(Strings.insert_record)}
             id={'toolInsertRecord'}
+          />
+        )}
+        {!isOrgView && !isCalendarView && !isGalleryView && !isKanbanView && !isMobile && embedSetting.basicTools && iframeShowTool && (
+          <ToolItem
+            showLabel={showIconBarLabel}
+            disabled={!permissions.rowCreatable}
+            className={styles.toolbarItem}
+            onClick={splitTransactions}
+            icon={<RankOutlined size={16} color={colors.secondLevelText} className={styles.toolIcon} />}
+            text={t(Strings.split_transactions)}
+            id={DATASHEET_ID.TOOL_BAR_SPLIT_TRANSACTIONS}
           />
         )}
         {isKanbanView && kanbanFieldId && !isMobile && embedSetting.basicTools && (

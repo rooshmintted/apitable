@@ -2735,6 +2735,7 @@
   "insert_field_below": "Insert field below",
   "insert_new_field_below": "Insert new field below",
   "insert_record": "Insert record",
+  "split_transactions": "Split Transactions",
   "insert_record_above": "Insert record above",
   "insert_record_below": "Insert record below",
   "insert_record_left": "Insert ${record_tip} before",

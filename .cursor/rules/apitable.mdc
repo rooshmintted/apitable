@@ -1,0 +1,172 @@
+---
+alwaysApply: true
+---
+# APITable Cursor Rules  
+# Repository: apitable/apitable - Open source no-code database platform  
+  
+## Project Overview  
+This is a monorepo for APITable, an open-source alternative to Airtable. It includes a React/Next.js frontend, NestJS room-server, Java Spring Boot backend, and widget system.  
+  
+## Technology Stack & Architecture  
+- **Frontend**: React 18.2.0 + Next.js 12.3.1 + TypeScript 4.8.2  
+- **Backend**: NestJS (room-server) + Java Spring Boot (backend-server)    
+- **Package Manager**: pnpm 8.6.12 (REQUIRED - enforced by preinstall script)  
+- **Build System**: Nx 16.10.0 for monorepo orchestration  
+- **Styling**: styled-components 5.3.6 + Antd 4.23.5  
+- **Node Version**: 16.15.0 (specified in engines)  
+  
+## Repository Structure  
+apitable/
+├── backend-server/ # Java Spring Boot backend
+├── packages/
+│ ├── ai-components/ # AI-related components
+│ ├── components/ # Shared UI components
+│ ├── core/ # Core business logic
+│ ├── datasheet/ # Main frontend application
+│ ├── i18n-lang/ # Internationalization
+│ ├── icons/ # Icon components
+│ └── widget-sdk/ # Widget development SDK
+├── init-db/ # Database initialization
+└── package.json # Root package.json
+
+  
+## Code Style & Conventions  
+  
+### TypeScript Conventions  
+- **Interfaces**: MUST use "I" prefix (IUnitInfo, IExpression, IStoredData)  
+- **Enums**: Use PascalCase or UPPER_CASE for members  
+- **Variables**: camelCase, UPPER_CASE, or PascalCase allowed  
+- **Parameters**: camelCase or PascalCase, leading underscore allowed  
+- **Type-likes**: PascalCase format  
+  
+### Code Formatting  
+- **Indentation**: 2 spaces (enforced by ESLint)  
+- **Quotes**: Single quotes preferred  
+- **Line Length**: 150 characters maximum  
+- **Semicolons**: Required (enforced by @typescript-eslint/semi)  
+- **Comma Dangle**: "only-multiline"  
+  
+### React Conventions  
+- Self-closing components enforced for both JSX elements and HTML  
+- Display names not required (react/display-name: 0)  
+- Hooks rules strictly enforced (react-hooks/rules-of-hooks: "error")  
+- Boolean JSX props should omit the value when true  
+  
+### File Naming & Organization  
+- Use camelCase for most files  
+- Interface files typically end with .interface.ts  
+- Test files use standard Jest conventions  
+- Component files should be in PascalCase directories  
+  
+## Environment Variables & Configuration  
+  
+### Widget Development  
+- Widget visibility controlled via CUSTOM_WIDGET_VISIBLE environment variable  
+- Default template URL: WIDGET_DEFAULT_TEMPLATE_URL  
+- Widget development help URLs configurable  
+- Widget repository prefix configurable via WIDGET_REPO_PREFIX  
+  
+### Feature Flags  
+- Extensive environment variable system for feature toggles  
+- Widget-related flags: WIDGET_CENTER_OFFICIAL_TIP_VISIBLE, DASHBOARD_WIDGET_MAX_NUM  
+- Security features controlled via SECURITY_* prefixed variables  
+- UI features controlled via various *_VISIBLE variables  
+  
+### Localization  
+- Default language: en_US (configurable via SYSTEM_CONFIGURATION_DEFAULT_LANGUAGE)  
+- Default theme: dark (configurable via SYSTEM_CONFIGURATION_DEFAULT_THEME)  
+- Multi-language support with i18n-lang package  
+  
+## Development Commands  
+  
+### Package Management  
+- Always use `pnpm` (enforced by preinstall script)  
+- Use `pnpm --filter <package>` for package-specific commands  
+- Workspace dependencies use `workspace:*` syntax  
+  
+### Common Scripts  
+- `pnpm run sc` - Start core package  
+- `pnpm run sd` - Start datasheet in development  
+- `pnpm run sr` - Start room-server  
+- `pnpm run build:dst` - Build datasheet package  
+- `pnpm run lint:fix` - Fix linting issues  
+- `pnpm run prettier:fix` - Fix formatting issues  
+  
+### Testing  
+- Use Jest for unit testing  
+- Cypress for E2E testing  
+- Coverage available for core and room-server packages  
+  
+## Widget Development Guidelines  
+  
+### Widget SDK  
+- Use @apitable/widget-sdk for widget development  
+- Widgets have access to datasheet data through the SDK  
+- Maximum widgets per dashboard: 30 (configurable)  
+  
+### Widget Environment Setup  
+- Development help URLs configurable for different stages  
+- Browser restriction help documentation available  
+- Template source code provided via WIDGET_DEFAULT_TEMPLATE_URL  
+  
+## Git & Deployment Conventions  
+- **Branching**: Gitflow model (develop → feature branches → main)  
+- **Commits**: Conventional Commits format required  
+- **Versioning**: Semantic Versioning (SemVer)  
+- **Changelog**: Keep a Changelog format  
+  
+## Security & Permissions  
+- Row and column level permissions supported  
+- Watermark functionality available  
+- Audit logging capabilities  
+- SAML and SSO support in enterprise versions  
+  
+## Database & API  
+- REST API with full CRUD operations  
+- Datasheet Query Language (DQL) for advanced queries  
+- Real-time collaboration via WebSocket (room-server)  
+- API documentation available via built-in panel  
+  
+## Styling Guidelines  
+- Use styled-components for component styling  
+- Antd components for UI library  
+- Support for dark/light themes  
+- Mobile-responsive design with antd-mobile  
+  
+## Performance Considerations  
+- Canvas rendering engine for smooth spreadsheet interface  
+- 100k+ row support with real-time collaboration  
+- Operational Transformation (OT) algorithm for concurrent editing  
+- Lazy loading and virtualization for large datasets  
+  
+## Internationalization  
+- Use @apitable/i18n-lang package for translations  
+- Translation keys should be descriptive  
+- Support for multiple locales (en_US, zh_CN, etc.)  
+- Community translations via Crowdin  
+  
+## Error Handling & Logging  
+- Sentry integration for error tracking  
+- Custom error pages with help links  
+- Comprehensive logging in development  
+- Production error boundaries  
+  
+## When Working on This Codebase:  
+1. Always run `pnpm install` after cloning  
+2. Check environment variables are properly set  
+3. Use the provided scripts for consistent development  
+4. Follow the established naming conventions strictly  
+5. Test widgets in the widget development environment  
+6. Ensure responsive design for mobile devices  
+7. Consider internationalization for user-facing strings  
+8. Use proper TypeScript types and interfaces  
+9. Follow the component architecture patterns  
+10. Ensure proper error handling and user feedback  
+  
+## Important Notes:  
+- Self-hosted deployment supported with Docker  
+- Enterprise features available in hosted version  
+- Widget system is highly extensible  
+- Real-time collaboration is a core feature  
+- API-first design philosophy  
+- Strong focus on permissions and security  

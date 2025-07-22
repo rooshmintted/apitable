@@ -2742,6 +2742,7 @@
   "insert_field_below": "向下插入字段",
   "insert_new_field_below": "向下插入新字段",
   "insert_record": "插入行",
+  "split_transactions": "拆分交易",
   "insert_record_above": "向上插入行",
   "insert_record_below": "向下插入行",
   "insert_record_left": "向左方插入${record_tip}",

@@ -97,5 +97,7 @@ export const ORG_CHART_RECORD_LIST = PREFIX + 'ORG_CHART_RECORD_LIST'; // Organi
 // toolbar
 export const TOOL_BAR_VIEW_SETTING = PREFIX + 'TOOL_BAR_VIEW_SETTING'; // Toolbar - new record
 
+export const TOOL_BAR_SPLIT_TRANSACTIONS = PREFIX + 'TOOL_BAR_SPLIT_TRANSACTIONS'; // Toolbar - split transactions
+
 // side record card
 export const SIDE_RECORD_PANEL = PREFIX + 'SIDE_RECORD_PANEL';
