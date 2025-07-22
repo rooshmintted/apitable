@@ -266,6 +266,7 @@ const ToolbarBase = () => {
     let reconciledFieldId: string | null = null;
     let amountFieldId: string | null = null;
     let txidFieldId: string | null = null;
+    let typeFieldId: string | null = null;
     
     // Search for fields by name
     for (const [fieldId, field] of Object.entries(fieldMap)) {
@@ -275,8 +276,11 @@ const ToolbarBase = () => {
         reconciledFieldId = fieldId;
       } else if (field.name === 'Amount' && field.type === FieldType.Number) {
         amountFieldId = fieldId;
-      } else if (field.name === 'TXID' && field.type === FieldType.SingleText) {
-        txidFieldId = fieldId;
+              } else if (field.name === 'TXID') {
+          txidFieldId = fieldId;
+          console.log('TXID field found:', field.type, 'Field ID:', fieldId);
+      } else if (field.name === 'Type' && field.type === FieldType.SingleSelect) {
+        typeFieldId = fieldId;
       }
     }
     
@@ -317,25 +321,59 @@ const ToolbarBase = () => {
       const amountValue = amountFieldId ? (record.data[amountFieldId] as number) : null;
       const splitAmount = amountValue ? amountValue / productsValue.length : null;
       
-      // First, update the parent record with its own TXID if the field exists
-      if (txidFieldId && !record.data[txidFieldId]) {
-        const updateResult = resourceService.instance!.commandManager.execute({
-          cmd: CollaCommandName.SetRecords,
-          data: [{
+      // Find the option IDs for Transaction and Line Item if Type field exists
+      let transactionOptionId: string | null = null;
+      let lineItemOptionId: string | null = null;
+      
+      if (typeFieldId) {
+        const typeField = fieldMap[typeFieldId];
+        if (typeField && typeField.type === FieldType.SingleSelect) {
+          const options = (typeField as any).property?.options || [];
+          for (const option of options) {
+            if (option.name === 'Transaction') {
+              transactionOptionId = option.id;
+            } else if (option.name === 'Line Item') {
+              lineItemOptionId = option.id;
+            }
+          }
+        }
+      }
+      
+      // Update the parent record with its own TXID and Type = Transaction
+      const parentUpdates: any[] = [];
+      
+      if (txidFieldId) {
+                  parentUpdates.push({
             recordId: recordId,
             fieldId: txidFieldId,
             value: recordId
-          }]
+          });
+      }
+      
+      if (typeFieldId && transactionOptionId) {
+        parentUpdates.push({
+          recordId: recordId,
+          fieldId: typeFieldId,
+          value: transactionOptionId
         });
+      }
+      
+      if (parentUpdates.length > 0) {
+        console.log('Updating parent record:', recordId, 'with updates:', parentUpdates);
+        const updateResult = resourceService.instance!.commandManager.execute({
+          cmd: CollaCommandName.SetRecords,
+          data: parentUpdates
+        });
+        console.log('Parent update result:', updateResult);
       }
       
       // Create new records for each product
       productsValue.forEach((productId, productIndex) => {
         const newRecordData: { [fieldId: string]: any } = {};
         
-        // Copy all field values except products, amount, and TXID
+        // Copy all field values except products, amount, TXID, and Type
         for (const [fieldId, value] of Object.entries(record.data)) {
-          if (fieldId !== productsFieldId && fieldId !== amountFieldId && fieldId !== txidFieldId) {
+          if (fieldId !== productsFieldId && fieldId !== amountFieldId && fieldId !== txidFieldId && fieldId !== typeFieldId) {
             newRecordData[fieldId] = value;
           }
         }
@@ -350,7 +388,13 @@ const ToolbarBase = () => {
         
         // Set TXID to parent record ID if field exists
         if (txidFieldId) {
+          // Use the same format as parent - just the record ID
           newRecordData[txidFieldId] = recordId;
+        }
+        
+        // Set Type to "Line Item" if field exists
+        if (typeFieldId && lineItemOptionId) {
+          newRecordData[typeFieldId] = lineItemOptionId;
         }
         
         // Add to array of new records, inserting after the original record
