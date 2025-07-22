@@ -261,12 +261,13 @@ const ToolbarBase = () => {
     const snapshot = Selectors.getSnapshot(state)!;
     const visibleRows = Selectors.getVisibleRows(state);
     
-    // Find fields by name
+        // Find fields by name
     let productsFieldId: string | null = null;
     let reconciledFieldId: string | null = null;
     let amountFieldId: string | null = null;
     let txidFieldId: string | null = null;
     let typeFieldId: string | null = null;
+    let transactionIdFieldId: string | null = null;
     
     // Search for fields by name
     for (const [fieldId, field] of Object.entries(fieldMap)) {
@@ -276,17 +277,43 @@ const ToolbarBase = () => {
         reconciledFieldId = fieldId;
       } else if (field.name === 'Amount' && field.type === FieldType.Number) {
         amountFieldId = fieldId;
-              } else if (field.name === 'TXID') {
-          txidFieldId = fieldId;
-          console.log('TXID field found:', field.type, 'Field ID:', fieldId);
-      } else if (field.name === 'Type' && field.type === FieldType.SingleSelect) {
+      }  else if (field.name === 'Type' && field.type === FieldType.SingleSelect) {
         typeFieldId = fieldId;
-      }
+              } else if (field.name === 'TransactionId') {
+          transactionIdFieldId = fieldId;
+          console.log('Found TransactionId field:', field.type, 'fieldId:', fieldId);
+        }
     }
     
     if (!productsFieldId) {
       Message.warning({ content: 'Products field not found. Please ensure you have a field named "Products" with type OneWayLink.' });
       return;
+    }
+    
+    // First, collect all TransactionId values from visible rows to find duplicates
+    const transactionIdCounts = new Map<string, number>();
+    if (transactionIdFieldId) {
+      console.log('Collecting TransactionId values from field:', transactionIdFieldId);
+      visibleRows.forEach(row => {
+        const cellValue = Selectors.getCellValue(state, snapshot, row.recordId, transactionIdFieldId);
+        console.log(`Record ${row.recordId} TransactionId cellValue:`, cellValue);
+        
+        if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
+          // Handle different types of values (string, array, etc.)
+          let transactionIdStr: string;
+          if (Array.isArray(cellValue)) {
+            // For formula fields that might return arrays
+            transactionIdStr = cellValue.join(',');
+          } else {
+            transactionIdStr = String(cellValue);
+          }
+          
+          transactionIdCounts.set(transactionIdStr, (transactionIdCounts.get(transactionIdStr) || 0) + 1);
+        }
+      });
+      console.log('TransactionId counts:', Array.from(transactionIdCounts.entries()));
+    } else {
+      console.log('TransactionId field not found!');
     }
     
     // Collect records to split
@@ -296,12 +323,35 @@ const ToolbarBase = () => {
       const record = snapshot.recordMap[row.recordId];
       if (!record) return;
       
-      const productsValue = record.data[productsFieldId] as string[] | null;
-      const reconciledValue = reconciledFieldId ? record.data[reconciledFieldId] as boolean : false;
+      const productsValue = Selectors.getCellValue(state, snapshot, row.recordId, productsFieldId) as string[] | null;
+      const reconciledValue = reconciledFieldId ? Selectors.getCellValue(state, snapshot, row.recordId, reconciledFieldId) as boolean : false;
       
-      // Check if record has multiple products and is not reconciled
-      if (productsValue && Array.isArray(productsValue) && productsValue.length > 1 && !reconciledValue) {
-        recordsToSplit.push({ recordId: row.recordId, index });
+      // Check if this record's TransactionId appears more than once (indicating it's already been split)
+      let hasBeenSplit = false;
+      if (transactionIdFieldId) {
+        const cellValue = Selectors.getCellValue(state, snapshot, row.recordId, transactionIdFieldId);
+        if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
+          let transactionIdStr: string;
+          if (Array.isArray(cellValue)) {
+            transactionIdStr = cellValue.join(',');
+          } else {
+            transactionIdStr = String(cellValue);
+          }
+          
+          const count = transactionIdCounts.get(transactionIdStr) || 0;
+          if (count > 1) {
+            hasBeenSplit = true;
+            console.log(`Record ${row.recordId} with TransactionId "${transactionIdStr}" has count ${count}, skipping`);
+          }
+        }
+      }
+      
+      // Check if record has multiple products, is not reconciled, and hasn't been split already
+      if (productsValue && Array.isArray(productsValue) && productsValue.length > 1) {
+        console.log(`Record ${row.recordId}: products=${productsValue.length}, reconciled=${reconciledValue}, hasBeenSplit=${hasBeenSplit}`);
+        if (!reconciledValue && !hasBeenSplit) {
+          recordsToSplit.push({ recordId: row.recordId, index });
+        }
       }
     });
     
@@ -317,8 +367,8 @@ const ToolbarBase = () => {
       const record = snapshot.recordMap[recordId];
       if (!record) return;
       
-      const productsValue = record.data[productsFieldId] as string[];
-      const amountValue = amountFieldId ? (record.data[amountFieldId] as number) : null;
+      const productsValue = Selectors.getCellValue(state, snapshot, recordId, productsFieldId) as string[];
+      const amountValue = amountFieldId ? (Selectors.getCellValue(state, snapshot, recordId, amountFieldId) as number) : null;
       const splitAmount = amountValue ? amountValue / productsValue.length : null;
       
       // Find the option IDs for Transaction and Line Item if Type field exists
@@ -339,17 +389,10 @@ const ToolbarBase = () => {
         }
       }
       
-      // Update the parent record with its own TXID and Type = Transaction
+            // Update the parent record with its own TXID and Type = Transaction
       const parentUpdates: any[] = [];
       
-      if (txidFieldId) {
-                  parentUpdates.push({
-            recordId: recordId,
-            fieldId: txidFieldId,
-            value: recordId
-          });
-      }
-      
+             
       if (typeFieldId && transactionOptionId) {
         parentUpdates.push({
           recordId: recordId,
@@ -359,12 +402,10 @@ const ToolbarBase = () => {
       }
       
       if (parentUpdates.length > 0) {
-        console.log('Updating parent record:', recordId, 'with updates:', parentUpdates);
         const updateResult = resourceService.instance!.commandManager.execute({
           cmd: CollaCommandName.SetRecords,
           data: parentUpdates
         });
-        console.log('Parent update result:', updateResult);
       }
       
       // Create new records for each product
@@ -372,9 +413,13 @@ const ToolbarBase = () => {
         const newRecordData: { [fieldId: string]: any } = {};
         
         // Copy all field values except products, amount, TXID, and Type
-        for (const [fieldId, value] of Object.entries(record.data)) {
+        for (const [fieldId, field] of Object.entries(fieldMap)) {
           if (fieldId !== productsFieldId && fieldId !== amountFieldId && fieldId !== txidFieldId && fieldId !== typeFieldId) {
-            newRecordData[fieldId] = value;
+            const cellValue = Selectors.getCellValue(state, snapshot, recordId, fieldId);
+            // Only copy if there's an actual value
+            if (cellValue !== null && cellValue !== undefined) {
+              newRecordData[fieldId] = cellValue;
+            }
           }
         }
         
