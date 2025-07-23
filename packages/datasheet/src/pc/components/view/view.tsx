@@ -37,6 +37,7 @@ import {
   EventSourceTypeEnums,
 } from '@apitable/core';
 import { ArrowDownOutlined, ArrowUpOutlined, CopyOutlined, DeleteOutlined, EditOutlined, EyeOpenOutlined, InfoCircleOutlined } from '@apitable/icons';
+import { Collapse2OpenOutlined, Collapse2Outlined } from '@apitable/icons';
 import { MobileGrid } from 'pc/components/mobile_grid';
 import { useTriggerTypes } from 'pc/components/robot/robot_panel/hook_trigger';
 import { useShowViewLockModal } from 'pc/components/view_lock/use_show_view_lock_modal';
@@ -46,6 +47,7 @@ import { resourceService } from 'pc/resource_service';
 import { store } from 'pc/store';
 import { useAppSelector } from 'pc/store/react-redux';
 import { flatContextData } from 'pc/utils';
+import { VikaSplitPanel } from '../common';
 import { CalendarView } from '../calendar_view';
 import { ComponentDisplay, ScreenSize } from '../common/component_display';
 import { expandRecordIdNavigate } from '../expand_record';
@@ -55,6 +57,7 @@ import { KanbanView } from '../kanban_view';
 import { KonvaGridView } from '../konva_grid';
 import { OrgChartView } from '../org_chart_view';
 import { Toolbar } from '../tool_bar';
+import { DatasheetSidePanel } from './datasheet_side_panel';
 import { DATASHEET_VIEW_CONTAINER_ID } from './id';
 import styles from './style.module.less';
 export { DATASHEET_VIEW_CONTAINER_ID };
@@ -87,6 +90,10 @@ export const View: React.FC<React.PropsWithChildren<any>> = () => {
   const isSideRecordOpen = useAppSelector((state) => state.space.isSideRecordOpen);
   const router = useRouter();
   const isViewLock = useShowViewLockModal();
+
+  // State for managing side panel visibility
+  const [sidePanelVisible, setSidePanelVisible] = React.useState(true);
+  const [sidePanelWidth, setSidePanelWidth] = React.useState(300);
 
   useEffect(() => {
     if (!activeRecordId) {
@@ -144,6 +151,29 @@ export const View: React.FC<React.PropsWithChildren<any>> = () => {
   const embedInfo = useAppSelector((state) => Selectors.getEmbedInfo(state));
   const { isShowEmbedToolBar = true } = embedInfo;
 
+  const renderViewComponent = ({ height, width }: { height: number; width: number }) => {
+    switch (currentView.type) {
+      case ViewType.Grid: {
+        if (isMobile) {
+          return <MobileGrid width={width} height={height - 40} />;
+        }
+        return <KonvaGridView width={width} height={height} />;
+      }
+      case ViewType.Gallery:
+        return <GalleryView height={height} width={width} />;
+      case ViewType.Calendar:
+        return <CalendarView height={height} width={width} />;
+      case ViewType.Kanban:
+        return <KanbanView height={height} width={width} />;
+      case ViewType.Gantt:
+        return <GanttView width={width} height={height} />;
+      case ViewType.OrgChart:
+        return <OrgChartView width={width} height={height - (isMobile ? 40 : 0)} isMobile={isMobile} />;
+      default:
+        return <KonvaGridView width={width} height={height} />;
+    }
+  };
+
   return (
     <div
       id={DATASHEET_VIEW_CONTAINER_ID}
@@ -163,6 +193,34 @@ export const View: React.FC<React.PropsWithChildren<any>> = () => {
           <Toolbar />
         </ComponentDisplay>
       )}
+      
+      {/* Toggle button for side panel */}
+      {!isMobile && (
+        <div 
+          className={styles.sidePanelToggle}
+          onClick={() => setSidePanelVisible(!sidePanelVisible)}
+          style={{
+            position: 'absolute',
+            right: sidePanelVisible ? sidePanelWidth - 12 : -12,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 10,
+            width: 24,
+            height: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colors.bgCommonDefault,
+            border: `1px solid ${colors.lineColor}`,
+            borderRadius: '4px 0 0 4px',
+            cursor: 'pointer',
+            transition: 'right 0.3s ease',
+          }}
+        >
+          {sidePanelVisible ? <Collapse2Outlined size={16} color={colors.textCommonTertiary} /> : <Collapse2OpenOutlined size={16} color={colors.textCommonTertiary} />}
+        </div>
+      )}
+      
       <div
         style={{
           flex: '1 1 auto',
@@ -172,26 +230,26 @@ export const View: React.FC<React.PropsWithChildren<any>> = () => {
       >
         <AutoSizer className={classNames(styles.viewContainer, 'viewContainer')} style={{ width: '100%', height: '100%' }}>
           {({ height, width }) => {
-            switch (currentView.type) {
-              case ViewType.Grid: {
-                if (isMobile) {
-                  return <MobileGrid width={width} height={height - 40} />;
-                }
-                return <KonvaGridView width={width} height={height} />;
-              }
-              case ViewType.Gallery:
-                return <GalleryView height={height} width={width} />;
-              case ViewType.Calendar:
-                return <CalendarView height={height} width={width} />;
-              case ViewType.Kanban:
-                return <KanbanView height={height} width={width} />;
-              case ViewType.Gantt:
-                return <GanttView width={width} height={height} />;
-              case ViewType.OrgChart:
-                return <OrgChartView width={width} height={height - (isMobile ? 40 : 0)} isMobile={isMobile} />;
-              default:
-                return <KonvaGridView width={width} height={height} />;
+            // On mobile or when side panel is hidden, render view directly
+            if (isMobile || !sidePanelVisible) {
+              return renderViewComponent({ height, width });
             }
+
+            // Desktop with side panel - use split panel
+            return (
+              <VikaSplitPanel
+                panelLeft={renderViewComponent({ height, width: width - sidePanelWidth })}
+                panelRight={<DatasheetSidePanel />}
+                split="vertical"
+                primary="first"
+                size={width - sidePanelWidth}
+                minSize={width * 0.5}
+                maxSize={width - 250}
+                onChange={(newSize: number) => setSidePanelWidth(width - newSize)}
+                allowResize={true}
+                style={{ width: '100%', height: '100%' }}
+              />
+            );
           }}
         </AutoSizer>
       </div>

@@ -1,0 +1,74 @@
+@import "~pc/styles/lib_var.less";
+@import "~pc/styles/lib_mixins.less";
+
+.datasheetSidePanel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-left: 1px solid var(--lineColor);
+}
+
+.header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--lineColor);
+  
+  h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--textCommonPrimary);
+  }
+}
+
+.content {
+  flex: 1;
+  padding: 16px 24px;
+  overflow-y: auto;
+}
+
+.firstRowData {
+  .sectionTitle {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--textCommonSecondary);
+  }
+}
+
+.dataList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dataItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--lineColor);
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.fieldName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--textCommonTertiary);
+}
+
+.fieldValue {
+  font-size: 14px;
+  color: var(--textCommonPrimary);
+  word-break: break-word;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--textCommonTertiary);
+  font-size: 14px;
+} 
