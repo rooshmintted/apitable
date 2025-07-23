@@ -26,6 +26,7 @@ import { useAppSelector } from 'pc/store/react-redux';
 import { getStorage, setStorage, StorageName } from 'pc/utils/storage';
 import { URLTreemap } from './url_treemap';
 import { AIChatInterface } from './ai_chat_interface';
+import { InsightsPanel } from './insights_panel';
 import styles from './style.module.less';
 
 type TabType = 'chat' | 'dataViz' | 'insights';
@@ -154,11 +155,13 @@ export const DatasheetSidePanel: React.FC = () => {
                 )}
                 
                 {activeTab === 'insights' && (
-                  <div className={styles.insightsContainer}>
-                    <p style={{ color: colors.textCommonTertiary, textAlign: 'center', marginTop: 40 }}>
-                      Insights coming soon...
-                    </p>
-                  </div>
+                  <InsightsPanel 
+                    rows={rows}
+                    fieldMap={fieldMap}
+                    visibleColumns={visibleColumns}
+                    getCellValue={getCellValue}
+                    apiKey={apiKey}
+                  />
                 )}
               </div>
             </div>

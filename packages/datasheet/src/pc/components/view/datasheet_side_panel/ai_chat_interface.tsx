@@ -114,7 +114,7 @@ export const AIChatInterface: React.FC<IAIChatInterfaceProps> = ({
     if (!inputText.trim() || isLoading) return;
 
     if (!apiKey) {
-      setError('OpenAI API key is not configured. Please add OPENAI_API_KEY to your .env file.');
+      setError('OpenAI API key is not configured. Please click the settings button above to add your API key.');
       return;
     }
 
@@ -155,14 +155,14 @@ export const AIChatInterface: React.FC<IAIChatInterfaceProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer `
+          'Authorization': `Bearer ${apiKey}`
         },
-                  body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: updatedMessages,
-            max_completion_tokens: 16384,
-            stream: false
-          }),
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: updatedMessages,
+          max_completion_tokens: 16384,
+          stream: false
+        }),
         signal: abortControllerRef.current.signal
       });
 
