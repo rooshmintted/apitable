@@ -21,6 +21,7 @@
  */
 export const getEnvVars = () => {
   return {
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     LOGIN_MOTTO: process.env.LOGIN_MOTTO,
     ENABLE_DATABUS_API: process.env.ENABLE_DATABUS_API === 'true',
     WASM_NEST_BASE_URL: process.env.WASM_NEST_BASE_URL,

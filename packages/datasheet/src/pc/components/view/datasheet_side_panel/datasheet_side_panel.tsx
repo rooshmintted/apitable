@@ -17,15 +17,33 @@
  */
 
 import * as React from 'react';
+import { useState } from 'react';
 import { shallowEqual } from 'react-redux';
-import { useThemeColors } from '@apitable/components';
-import { IReduxState, Selectors, Field } from '@apitable/core';
+import { useThemeColors, IconButton, Modal, TextInput, Button } from '@apitable/components';
+import { IReduxState, Selectors, Field, Strings, t } from '@apitable/core';
+import { SettingOutlined } from '@apitable/icons';
 import { useAppSelector } from 'pc/store/react-redux';
+import { getStorage, setStorage, StorageName } from 'pc/utils/storage';
 import { URLTreemap } from './url_treemap';
+import { AIChatInterface } from './ai_chat_interface';
 import styles from './style.module.less';
+
+type TabType = 'chat' | 'dataViz' | 'insights';
 
 export const DatasheetSidePanel: React.FC = () => {
   const colors = useThemeColors();
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [tempApiKey, setTempApiKey] = useState('');
+  const [activeTab, setActiveTab] = useState<TabType>('chat');
+  
+  // Load API key from localStorage on mount
+  React.useEffect(() => {
+    const storedKey = getStorage(StorageName.OpenAIApiKey);
+    if (storedKey) {
+      setApiKey(storedKey);
+    }
+  }, []);
   
   // Get datasheet data from Redux state
   const { rows, fieldMap, currentView, snapshot, datasheetId, state } = useAppSelector((state: IReduxState) => {
@@ -56,49 +74,158 @@ export const DatasheetSidePanel: React.FC = () => {
     return Selectors.getCellValue(state, snapshot, recordId, fieldId);
   };
 
+  const handleSaveApiKey = () => {
+    if (tempApiKey.trim()) {
+      setStorage(StorageName.OpenAIApiKey, tempApiKey.trim());
+      setApiKey(tempApiKey.trim());
+      setShowSettingsModal(false);
+      setTempApiKey('');
+    }
+  };
+
+  const handleDeleteApiKey = () => {
+    setStorage(StorageName.OpenAIApiKey, '');
+    setApiKey('');
+    setTempApiKey('');
+  };
+
   return (
     <div className={styles.datasheetSidePanel} style={{ backgroundColor: colors.bgCommonDefault }}>
       <div className={styles.header}>
-        <h2>Hello World</h2>
       </div>
-      <div className={styles.content}>
-        {firstRow ? (
-          <>
-            <div className={styles.firstRowData}>
-              <h3 className={styles.sectionTitle}>First Row Data</h3>
-              <div className={styles.dataList}>
-                {visibleColumns.map((col) => {
-                  const field = fieldMap[col.fieldId];
-                  if (!field) return null;
-                  
-                  // Use Selectors.getCellValue directly
-                  const cellValue = getCellValue(firstRow.recordId, col.fieldId);
-                  
-                  // Use Field.bindModel to get the field instance with cellValueToString method
-                  const displayValue = Field.bindModel(field).cellValueToString(cellValue);
-                  
-                  return (
-                    <div key={col.fieldId} className={styles.dataItem}>
-                      <div className={styles.fieldName}>{field.name}:</div>
-                      <div className={styles.fieldValue}>{displayValue || '—'}</div>
-                    </div>
-                  );
-                })}
+              <div className={styles.content}>
+          {firstRow ? (
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                {/* Tab Navigation */}
+                <div className={styles.tabNavigation}>
+                  <div 
+                    className={`${styles.tab} ${activeTab === 'chat' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('chat')}
+                  >
+                    Chat
+                  </div>
+                  <div 
+                    className={`${styles.tab} ${activeTab === 'dataViz' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('dataViz')}
+                  >
+                    Data Viz
+                  </div>
+                  <div 
+                    className={`${styles.tab} ${activeTab === 'insights' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('insights')}
+                  >
+                    Insights
+                  </div>
+                </div>
+                
+                {/* Settings button - only show on chat tab */}
+                {activeTab === 'chat' && (
+                  <IconButton
+                    icon={SettingOutlined}
+                    onClick={() => {
+                      setTempApiKey(apiKey);
+                      setShowSettingsModal(true);
+                    }}
+                    size="small"
+                  />
+                )}
+              </div>
+              
+              {/* Tab Content */}
+              <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                {activeTab === 'chat' && (
+                  <AIChatInterface 
+                    rows={rows}
+                    fieldMap={fieldMap}
+                    visibleColumns={visibleColumns}
+                    getCellValue={getCellValue}
+                    apiKey={apiKey}
+                  />
+                )}
+                
+                {activeTab === 'dataViz' && (
+                  <URLTreemap 
+                    rows={rows}
+                    fieldMap={fieldMap}
+                    visibleColumns={visibleColumns}
+                    getCellValue={getCellValue}
+                  />
+                )}
+                
+                {activeTab === 'insights' && (
+                  <div className={styles.insightsContainer}>
+                    <p style={{ color: colors.textCommonTertiary, textAlign: 'center', marginTop: 40 }}>
+                      Insights coming soon...
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
-            
-            {/* URL Treemap Visualization */}
-            <URLTreemap 
-              rows={rows}
-              fieldMap={fieldMap}
-              visibleColumns={visibleColumns}
-              getCellValue={getCellValue}
-            />
-          </>
-        ) : (
-          <div className={styles.emptyState}>No records available</div>
-        )}
+          ) : (
+            <div className={styles.emptyState}>No records available</div>
+          )}
       </div>
+      
+      {/* Settings Modal */}
+      <Modal
+        title="AI Assistant Settings"
+        visible={showSettingsModal}
+        onCancel={() => {
+          setShowSettingsModal(false);
+          setTempApiKey(apiKey);
+        }}
+        footer={null}
+        width={480}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
+            OpenAI API Key
+          </label>
+          <TextInput
+            value={tempApiKey}
+            onChange={(e) => setTempApiKey(e.target.value)}
+            placeholder="sk-..."
+            type="password"
+            style={{ marginBottom: 8 }}
+          />
+          <div style={{ fontSize: 12, color: colors.textCommonTertiary }}>
+            Your API key is stored locally in your browser and never sent to our servers.
+            Get your API key from{' '}
+            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">
+              OpenAI Platform
+            </a>
+          </div>
+        </div>
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
+          <Button
+            color="danger"
+            variant="fill"
+            onClick={handleDeleteApiKey}
+            disabled={!apiKey}
+          >
+            Delete Key
+          </Button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button
+              onClick={() => {
+                setShowSettingsModal(false);
+                setTempApiKey(apiKey);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="primary"
+              onClick={handleSaveApiKey}
+              disabled={!tempApiKey.trim() || tempApiKey === apiKey}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }; 

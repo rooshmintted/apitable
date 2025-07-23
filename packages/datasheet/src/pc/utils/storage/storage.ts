@@ -46,6 +46,7 @@ export enum StorageName {
   DingTalkVisitedFolders = 'DingTalkVisitedFolders', // Folders created from Dingtalk templates
   FieldDescCollapseStatus = 'FieldDescCollapseStatus', // Whether the field description is collapsed
   ApiDebugWarnConfirm = 'ApiDebugWarnConfirm', // Api panel jump debugging does not open token when warning whether to confirm reading
+  OpenAIApiKey = 'OpenAIApiKey', // OpenAI API key for AI assistant
   Other = 'Other',
 }
 
@@ -102,6 +103,7 @@ interface IStorage {
   [StorageName.DingTalkVisitedFolders]: string[];
   [StorageName.FieldDescCollapseStatus]: IFieldDescCollapseStatus;
   [StorageName.ApiDebugWarnConfirm]: boolean;
+  [StorageName.OpenAIApiKey]: string;
   [StorageName.Other]: any;
 }
 

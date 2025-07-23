@@ -1,0 +1,168 @@
+@import "~pc/styles/lib_var.less";
+
+.aiChatInterface {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; // Important for flex children
+  overflow: hidden;
+  width: 100%; // Ensure it doesn't exceed parent width
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--textCommonPrimary);
+}
+
+.errorMessage {
+  background-color: var(--bgDangerDefault);
+  color: var(--textDangerDefault);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.warningMessage {
+  background-color: var(--bgWarningDefault);
+  color: var(--textWarningDefault);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+
+  code {
+    background-color: var(--bgCommonDefault);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 13px;
+  }
+}
+
+.chatContainer {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 16px;
+  padding: 8px;
+  background-color: var(--lowestBg); // Use theme variable for background
+  border-radius: 8px;
+  border: 1px solid var(--borderCommonDefault);
+  min-height: 0; // Important for proper scrolling
+  max-height: 100%; // Prevent excessive height
+  width: 100%; // Ensure it doesn't exceed parent width
+  box-sizing: border-box; // Include padding in width calculation
+}
+
+.userMessage,
+.assistantMessage {
+  margin-bottom: 16px;
+  animation: fadeIn 0.3s ease-in;
+  width: 100%; // Ensure messages don't overflow
+  box-sizing: border-box;
+}
+
+.userMessage {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.assistantMessage {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.messageHeader {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--textCommonSecondary); // Use theme variable instead of white
+  margin-bottom: 4px;
+}
+
+.messageContent {
+  display: inline-block;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 85%;
+  word-wrap: break-word;
+  word-break: break-word; // Better word breaking
+  white-space: pre-wrap;
+  overflow-wrap: break-word; // Additional overflow handling
+}
+
+.userMessage .messageContent {
+  background-color: var(--primaryColor); // Use theme variable
+  color: var(--textStaticPrimary); // White text on primary background
+}
+
+.assistantMessage .messageContent {
+  background-color: var(--bgCommonDefault); // Use theme variable
+  color: var(--textCommonPrimary); // Use theme variable for text
+  border: 1px solid var(--borderCommonDefault);
+}
+
+.loadingMessage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  color: var(--textCommonTertiary);
+  font-size: 14px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--borderCommonDefault);
+  border-top-color: var(--bgBrandDefault);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.cancelButton {
+  margin-left: auto;
+  font-size: 12px;
+  padding: 4px 8px;
+  height: auto;
+}
+
+.inputContainer {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.textInput {
+  flex: 1;
+  min-width: 0; // Allow input to shrink
+}
+
+.submitButton {
+  flex-shrink: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+} 

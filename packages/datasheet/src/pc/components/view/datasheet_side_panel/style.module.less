@@ -12,6 +12,9 @@
 .header {
   padding: 16px 20px;
   border-bottom: 1px solid var(--lineColor);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   
   h2 {
     margin: 0;
@@ -23,49 +26,14 @@
 
 .content {
   flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-}
-
-.firstRowData {
-  margin-bottom: 32px;
-}
-
-.sectionTitle {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: var(--textCommonPrimary);
-}
-
-.dataList {
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  padding: 20px;
+  min-height: 0; // Important for flex children
 }
 
-.dataItem {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  padding: 8px 12px;
-  background: var(--fillDefault);
-  border-radius: 6px;
-  border: 1px solid var(--lineColor);
-}
 
-.fieldName {
-  font-weight: 500;
-  color: var(--textCommonSecondary);
-  min-width: 120px;
-  flex-shrink: 0;
-}
-
-.fieldValue {
-  color: var(--textCommonPrimary);
-  word-break: break-word;
-  flex: 1;
-}
 
 .emptyState {
   text-align: center;
@@ -79,4 +47,47 @@
   background: var(--fillDefault);
   border-radius: 8px;
   border: 1px solid var(--lineColor);
+}
+
+.tabNavigation {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid var(--lineColor);
+  flex: 1;
+}
+
+.tab {
+  padding: 8px 0;
+  cursor: pointer;
+  color: var(--textCommonTertiary);
+  font-weight: 500;
+  font-size: 14px;
+  position: relative;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--textCommonPrimary);
+  }
+}
+
+.activeTab {
+  color: var(--textCommonPrimary);
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--primaryColor);
+  }
+}
+
+.insightsContainer {
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 60px;
 } 
