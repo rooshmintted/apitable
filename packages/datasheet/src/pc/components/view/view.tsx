@@ -91,9 +91,15 @@ export const View: React.FC<React.PropsWithChildren<any>> = () => {
   const router = useRouter();
   const isViewLock = useShowViewLockModal();
 
-  // State for managing side panel visibility
+  // State for managing side panel visibility - default to visible and 50% width
   const [sidePanelVisible, setSidePanelVisible] = React.useState(true);
-  const [sidePanelWidth, setSidePanelWidth] = React.useState(300);
+  const [sidePanelWidth, setSidePanelWidth] = React.useState(() => {
+    // Initialize to 50% of window width, with a minimum of 400px
+    if (typeof window !== 'undefined') {
+      return Math.max(window.innerWidth * 0.5, 400);
+    }
+    return 600; // Fallback width
+  });
 
   useEffect(() => {
     if (!activeRecordId) {
@@ -119,6 +125,18 @@ export const View: React.FC<React.PropsWithChildren<any>> = () => {
     searchParams.delete('activeRecordId');
     router.replace(urlObj.pathname + urlObj.search);
   }, [rows, activeRecordId, datasheetId, views, isSideRecordOpen, router]);
+
+  // Handle window resize to maintain panel at 50% width
+  useEffect(() => {
+    const handleResize = () => {
+      if (sidePanelVisible) {
+        setSidePanelWidth(Math.max(window.innerWidth * 0.5, 400));
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [sidePanelVisible]);
 
   useEffect(() => {
     if (!datasheetId || shareId || templateId || embedId) return;
