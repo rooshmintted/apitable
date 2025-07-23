@@ -155,7 +155,7 @@ export const AIChatInterface: React.FC<IAIChatInterfaceProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer`
+          'Authorization': `Bearer `
         },
                   body: JSON.stringify({
             model: 'gpt-4o-mini',
