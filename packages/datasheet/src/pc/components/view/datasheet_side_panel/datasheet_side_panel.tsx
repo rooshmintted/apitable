@@ -21,6 +21,7 @@ import { shallowEqual } from 'react-redux';
 import { useThemeColors } from '@apitable/components';
 import { IReduxState, Selectors, Field } from '@apitable/core';
 import { useAppSelector } from 'pc/store/react-redux';
+import { URLTreemap } from './url_treemap';
 import styles from './style.module.less';
 
 export const DatasheetSidePanel: React.FC = () => {
@@ -49,6 +50,12 @@ export const DatasheetSidePanel: React.FC = () => {
   const firstRow = rows[0];
   const visibleColumns = currentView?.columns?.filter(col => !col.hidden) || [];
 
+  // Helper function to get cell value
+  const getCellValue = (recordId: string, fieldId: string) => {
+    if (!state || !snapshot) return null;
+    return Selectors.getCellValue(state, snapshot, recordId, fieldId);
+  };
+
   return (
     <div className={styles.datasheetSidePanel} style={{ backgroundColor: colors.bgCommonDefault }}>
       <div className={styles.header}>
@@ -56,33 +63,38 @@ export const DatasheetSidePanel: React.FC = () => {
       </div>
       <div className={styles.content}>
         {firstRow ? (
-          <div className={styles.firstRowData}>
-            <h3 className={styles.sectionTitle}>First Row Data</h3>
-            <div className={styles.dataList}>
-              {visibleColumns.map((col) => {
-                const field = fieldMap[col.fieldId];
-                if (!field) return null;
-                
-                // Use Selectors.getCellValue directly
-                const cellValue = state && snapshot ? Selectors.getCellValue(
-                  state,
-                  snapshot,
-                  firstRow.recordId,
-                  col.fieldId
-                ) : null;
-                
-                // Use Field.bindModel to get the field instance with cellValueToString method
-                const displayValue = Field.bindModel(field).cellValueToString(cellValue);
-                
-                return (
-                  <div key={col.fieldId} className={styles.dataItem}>
-                    <div className={styles.fieldName}>{field.name}:</div>
-                    <div className={styles.fieldValue}>{displayValue || '—'}</div>
-                  </div>
-                );
-              })}
+          <>
+            <div className={styles.firstRowData}>
+              <h3 className={styles.sectionTitle}>First Row Data</h3>
+              <div className={styles.dataList}>
+                {visibleColumns.map((col) => {
+                  const field = fieldMap[col.fieldId];
+                  if (!field) return null;
+                  
+                  // Use Selectors.getCellValue directly
+                  const cellValue = getCellValue(firstRow.recordId, col.fieldId);
+                  
+                  // Use Field.bindModel to get the field instance with cellValueToString method
+                  const displayValue = Field.bindModel(field).cellValueToString(cellValue);
+                  
+                  return (
+                    <div key={col.fieldId} className={styles.dataItem}>
+                      <div className={styles.fieldName}>{field.name}:</div>
+                      <div className={styles.fieldValue}>{displayValue || '—'}</div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+            
+            {/* URL Treemap Visualization */}
+            <URLTreemap 
+              rows={rows}
+              fieldMap={fieldMap}
+              visibleColumns={visibleColumns}
+              getCellValue={getCellValue}
+            />
+          </>
         ) : (
           <div className={styles.emptyState}>No records available</div>
         )}

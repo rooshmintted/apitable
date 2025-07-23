@@ -1,7 +1,7 @@
 @import "~pc/styles/lib_var.less";
-@import "~pc/styles/lib_mixins.less";
 
 .datasheetSidePanel {
+  position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -10,30 +10,32 @@
 }
 
 .header {
-  padding: 16px 24px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--lineColor);
   
   h2 {
     margin: 0;
     font-size: 18px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--textCommonPrimary);
   }
 }
 
 .content {
   flex: 1;
-  padding: 16px 24px;
   overflow-y: auto;
+  padding: 20px;
 }
 
 .firstRowData {
-  .sectionTitle {
-    margin: 0 0 16px 0;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--textCommonSecondary);
-  }
+  margin-bottom: 32px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--textCommonPrimary);
 }
 
 .dataList {
@@ -44,31 +46,37 @@
 
 .dataItem {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--lineColor);
-  
-  &:last-child {
-    border-bottom: none;
-  }
+  gap: 8px;
+  align-items: flex-start;
+  padding: 8px 12px;
+  background: var(--fillDefault);
+  border-radius: 6px;
+  border: 1px solid var(--lineColor);
 }
 
 .fieldName {
-  font-size: 12px;
   font-weight: 500;
-  color: var(--textCommonTertiary);
+  color: var(--textCommonSecondary);
+  min-width: 120px;
+  flex-shrink: 0;
 }
 
 .fieldValue {
-  font-size: 14px;
   color: var(--textCommonPrimary);
   word-break: break-word;
+  flex: 1;
 }
 
 .emptyState {
   text-align: center;
-  padding: 40px 16px;
+  padding: 40px 20px;
   color: var(--textCommonTertiary);
-  font-size: 14px;
+}
+
+.treemapContainer {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--fillDefault);
+  border-radius: 8px;
+  border: 1px solid var(--lineColor);
 } 
