@@ -98,9 +98,7 @@ export const DatasheetSidePanel: React.FC = () => {
 
   return (
     <div className={styles.datasheetSidePanel} style={{ backgroundColor: colors.bgCommonDefault }}>
-      <div className={styles.header}>
-      </div>
-              <div className={styles.content}>
+      <div className={styles.content}>
           {firstRow ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>

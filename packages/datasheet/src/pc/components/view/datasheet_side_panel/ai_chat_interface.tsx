@@ -222,12 +222,29 @@ export const AIChatInterface: React.FC<IAIChatInterfaceProps> = ({
     }
   };
 
+  const handleQuestionClick = (question: string) => {
+    setInputText(question);
+    // Optionally auto-submit the question
+    // handleSubmit();
+  };
+
+  const suggestedQuestions = [
+    "What time am I most productive?",
+    "What are my biggest time-wasting websites and how much time do I spend on them?",
+    "When do I browse the most questionable content? 👀",
+    "Am I a night owl or early bird based on my browsing patterns?",
+    "What's my procrastination-to-productivity ratio and which sites are my biggest distractions?"
+  ];
+
   // Filter to show only user and assistant messages (not system)
   const displayMessages = messages.filter(msg => msg.role !== 'system');
 
   return (
     <div className={styles.aiChatInterface}>
-      <h3 className={styles.sectionTitle}>AI Assistant</h3>
+      <div className={styles.explanatoryText}>
+        <p>💡 <strong>Discover insights about your browsing habits!</strong></p>
+        <p>Ask questions about your internet history to uncover patterns, productivity insights, and interesting trends in your digital behavior.</p>
+      </div>
       
       {!apiKey && (
         <div className={styles.warningMessage}>
@@ -280,6 +297,24 @@ export const AIChatInterface: React.FC<IAIChatInterfaceProps> = ({
             </Button>
           </div>
         )}
+      </div>
+
+      <div className={styles.suggestedQuestions}>
+        <h4>Popular questions to get you started:</h4>
+        <div className={styles.questionButtons}>
+          {suggestedQuestions.map((question, index) => (
+            <Button
+              key={index}
+              onClick={() => handleQuestionClick(question)}
+              variant="jelly"
+              size="small"
+              className={styles.questionButton}
+              disabled={isLoading || !apiKey}
+            >
+              {question}
+            </Button>
+          ))}
+        </div>
       </div>
 
       <div className={styles.inputContainer}>
