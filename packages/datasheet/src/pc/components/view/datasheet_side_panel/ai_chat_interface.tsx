@@ -33,6 +33,7 @@ interface IAIChatInterfaceProps {
 interface Message {
   role: 'system' | 'user' | 'assistant';
   content: string;
+  originalInput?: string; // For user messages, store the original input without context
 }
 
 export const AIChatInterface: React.FC<IAIChatInterfaceProps> = ({ 
@@ -55,11 +56,10 @@ export const AIChatInterface: React.FC<IAIChatInterfaceProps> = ({
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Get API key from props or environment
-  const envApiKey = getEnvVars().OPENAI_API_KEY;
-  const apiKey = propsApiKey || envApiKey;
+  const apiKey = propsApiKey;
   
   // Debug: Log API key status (remove in production)
-  console.log('OpenAI API Key configured:', !!apiKey, 'Source:', propsApiKey ? 'UI Settings' : envApiKey ? '.env file' : 'Not configured');
+  console.log('OpenAI API Key configured:', !!apiKey);
 
   // Prepare data context from visible rows
   const prepareDataContext = () => {
@@ -134,7 +134,8 @@ export const AIChatInterface: React.FC<IAIChatInterfaceProps> = ({
       // Create the new user message with context
       const userMessage: Message = {
         role: 'user',
-        content: inputText + contextString
+        content: inputText + contextString,
+        originalInput: inputText // Store original user input for display
       };
 
       // Update messages with user message
@@ -223,8 +224,6 @@ export const AIChatInterface: React.FC<IAIChatInterfaceProps> = ({
 
   // Filter to show only user and assistant messages (not system)
   const displayMessages = messages.filter(msg => msg.role !== 'system');
-  console.log('Current messages state:', messages);
-  console.log('Display messages:', displayMessages);
 
   return (
     <div className={styles.aiChatInterface}>
@@ -243,24 +242,29 @@ export const AIChatInterface: React.FC<IAIChatInterfaceProps> = ({
       )}
 
       <div className={styles.chatContainer}>
-        {displayMessages.map((message, index) => (
-          <div 
-            key={index} 
-            className={message.role === 'user' ? styles.userMessage : styles.assistantMessage}
-          >
-            <div className={styles.messageHeader}>
-              {message.role === 'user' ? 'You' : 'AI Assistant'}
+        {displayMessages.map((message, index) => {
+          // For user messages, show original input; for assistant messages, show full content
+          const displayContent = message.role === 'user' && message.originalInput ? message.originalInput : message.content;
+          
+          return (
+            <div 
+              key={index} 
+              className={message.role === 'user' ? styles.userMessage : styles.assistantMessage}
+            >
+              <div className={styles.messageHeader}>
+                {message.role === 'user' ? 'You' : 'AI Assistant'}
+              </div>
+              <div className={styles.messageContent}>
+                {displayContent.split('\n').map((line, i) => (
+                  <React.Fragment key={i}>
+                    {line}
+                    {i < displayContent.split('\n').length - 1 && <br />}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
-            <div className={styles.messageContent}>
-              {message.content.split('\n').map((line, i) => (
-                <React.Fragment key={i}>
-                  {line}
-                  {i < message.content.split('\n').length - 1 && <br />}
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
         
         {isLoading && (
           <div className={styles.loadingMessage}>

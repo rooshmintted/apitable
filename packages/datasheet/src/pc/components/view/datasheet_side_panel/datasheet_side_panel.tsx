@@ -23,7 +23,7 @@ import { useThemeColors, IconButton, Modal, TextInput, Button } from '@apitable/
 import { IReduxState, Selectors, Field, Strings, t } from '@apitable/core';
 import { SettingOutlined } from '@apitable/icons';
 import { useAppSelector } from 'pc/store/react-redux';
-import { getStorage, setStorage, StorageName } from 'pc/utils/storage';
+import { getStorage, setStorage, StorageName, StorageMethod, deleteStorageByKey } from 'pc/utils/storage';
 import { URLTreemap } from './url_treemap';
 import { AIChatInterface } from './ai_chat_interface';
 import { InsightsPanel } from './insights_panel';
@@ -41,8 +41,10 @@ export const DatasheetSidePanel: React.FC = () => {
   // Load API key from localStorage on mount
   React.useEffect(() => {
     const storedKey = getStorage(StorageName.OpenAIApiKey);
+    console.log('Loading API key from localStorage:', storedKey);
     if (storedKey) {
       setApiKey(storedKey);
+      console.log('API key loaded and set:', storedKey);
     }
   }, []);
   
@@ -77,17 +79,21 @@ export const DatasheetSidePanel: React.FC = () => {
 
   const handleSaveApiKey = () => {
     if (tempApiKey.trim()) {
-      setStorage(StorageName.OpenAIApiKey, tempApiKey.trim());
+      console.log('Saving API key:', tempApiKey.trim());
+      setStorage(StorageName.OpenAIApiKey, tempApiKey.trim(), StorageMethod.Set);
       setApiKey(tempApiKey.trim());
+      console.log('API key saved and set:', tempApiKey.trim());
       setShowSettingsModal(false);
       setTempApiKey('');
     }
   };
 
   const handleDeleteApiKey = () => {
-    setStorage(StorageName.OpenAIApiKey, '');
+    console.log('Deleting API key from storage');
+    deleteStorageByKey(StorageName.OpenAIApiKey);
     setApiKey('');
     setTempApiKey('');
+    console.log('API key deleted');
   };
 
   return (
@@ -189,7 +195,7 @@ export const DatasheetSidePanel: React.FC = () => {
             value={tempApiKey}
             onChange={(e) => setTempApiKey(e.target.value)}
             placeholder="sk-..."
-            type="password"
+            type="text"
             style={{ marginBottom: 8 }}
           />
           <div style={{ fontSize: 12, color: colors.textCommonTertiary }}>

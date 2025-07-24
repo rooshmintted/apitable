@@ -38,12 +38,48 @@ interface InsightResponse {
     animal: string;
     reason: string;
   };
-  weight?: {
+  sex?: {
     estimate: string;
     reason: string;
   };
-  ethnicity?: {
-    estimate: string;
+  philosopher?: {
+    philosopher: string;
+    reason: string;
+  };
+  artStyle?: {
+    style: string;
+    reason: string;
+  };
+  cognitiveStyle?: {
+    style: string;
+    reason: string;
+  };
+  productivityChronotype?: {
+    type: string;
+    reason: string;
+  };
+  intellectualArchetype?: {
+    archetype: string;
+    reason: string;
+  };
+  curiosityCompass?: {
+    mode: string;
+    reason: string;
+  };
+  problemSolvingMode?: {
+    mode: string;
+    reason: string;
+  };
+  gameStyleAnalogy?: {
+    style: string;
+    reason: string;
+  };
+  spendingPersona?: {
+    persona: string;
+    reason: string;
+  };
+  internetAlignment?: {
+    alignment: string;
     reason: string;
   };
 }
@@ -102,6 +138,9 @@ export const InsightsPanel: React.FC<IInsightsPanelProps> = ({
       const dataContext = prepareDataContext();
       const contextString = JSON.stringify(dataContext, null, 2);
 
+      // Debug: Log API key for debugging
+      console.log('Insights Panel - API Key:', apiKey);
+      
       // Make API call to OpenAI with structured output
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -111,37 +150,73 @@ export const InsightsPanel: React.FC<IInsightsPanelProps> = ({
         },
         body: JSON.stringify({
           model: 'gpt-4o-mini',
-          messages: [
+                    messages: [
             {
               role: 'system',
-              content: 'You are an insightful analyst who makes creative guesses about people based on their data. Try and support your guesses with data provided. '
+              content: 'You are an insightful analyst who makes creative guesses about people based on their browsing history and web data. IMPORTANT: In your reasoning, always cite specific examples from the browsing data provided to support your insights. Reference actual websites, tools, or patterns you observe in their digital behavior.'
             },
             {
               role: 'user',
-              content: `Based on this data, analyze and provide insights about the person. Here's the data:\n\n${contextString}\n\nProvide your analysis in the following JSON format:
+              content: `Based on this browsing history data, analyze and provide insights about this person's digital personality. Here's the data:\n\n${contextString}\n\nProvide your analysis in the following JSON format, making sure to cite specific examples from their browsing data in each reason:
+
 {
   "hogwartsHouse": {
     "house": "Gryffindor/Slytherin/Hufflepuff/Ravenclaw",
-    "reason": "Brief explanation"
+    "reason": "Brief explanation citing specific browsing examples"
   },
   "spiritAnimal": {
     "animal": "Animal name",
-    "reason": "Brief explanation"
+    "reason": "Brief explanation citing specific browsing examples"
   },
-  "weight": {
-    "estimate": "Weight range",
-    "reason": "Brief explanation"
+  "sex": {
+    "estimate": "Male/Female",
+    "reason": "Brief explanation citing gender-related browsing patterns or interests"
   },
-  "ethnicity": {
-    "estimate": "White/Asian/Hispanic/Other",
-    "reason": "Brief explanation"
+  "philosopher": {
+    "philosopher": "Philosopher name (e.g., Socrates, Nietzsche, Confucius, etc.)",
+    "reason": "Brief explanation citing philosophical or intellectual browsing patterns"
+  },
+  "artStyle": {
+    "style": "Art movement/style (e.g., Impressionism, Modernism, Street Art, etc.)",
+    "reason": "Brief explanation citing aesthetic preferences or creative browsing patterns"
+  },
+  "cognitiveStyle": {
+    "style": "Strategic Synthesizer/Pattern Recognizer/Systems Thinker/Creative Connector, etc",
+    "reason": "Brief explanation citing specific websites or tools they use"
+  },
+  "productivityChronotype": {
+    "type": "Midnight Tactician/Dawn Warrior/Afternoon Optimizer/Evening Explorer, etc",
+    "reason": "Brief explanation citing timestamp patterns or productivity tools"
+  },
+  "intellectualArchetype": {
+    "archetype": "Digital Librarian/Knowledge Curator/Information Hunter/Research Savant, etc",
+    "reason": "Brief explanation citing documentation sites, forums, or learning patterns"
+  },
+  "curiosityCompass": {
+    "mode": "Explorer Mode: On/Deep Dive Specialist/Breadth Seeker/Focused Researcher, etc",
+    "reason": "Brief explanation citing topic diversity or depth patterns"
+  },
+  "problemSolvingMode": {
+    "mode": "Stack Overflow Sorcerer/GitHub Archaeologist/Community Wisdom Seeker/Original Thinker, etc",
+    "reason": "Brief explanation citing help-seeking or solution-finding patterns"
+  },
+  "gameStyleAnalogy": {
+    "style": "4X Strategist/Puzzle Master/Action Optimizer/Simulation Enthusiast, etc",
+    "reason": "Brief explanation citing analytical or strategic browsing patterns"
+  },
+  "spendingPersona": {
+    "persona": "Value Hacker/Deal Hunter/Research Shopper/Impulse Controller, etc",
+    "reason": "Brief explanation citing shopping research or financial tool usage"
+  },
+  "internetAlignment": {
+    "alignment": "Chaotic Neutral/Lawful Researcher/Neutral Explorer/Digital Nomad, etc",
+    "reason": "Brief explanation citing browsing diversity and platform usage patterns"
   }
 }`
             }
           ],
           response_format: { type: "json_object" },
-          max_tokens: 100000,
-          temperature: 0.7
+          max_tokens: 16384
         })
       });
 
@@ -230,21 +305,102 @@ export const InsightsPanel: React.FC<IInsightsPanelProps> = ({
             />
           )}
           
-          {insights.weight && (
+          {insights.sex && (
             <InsightCard
-              title="Weight Estimate"
-              value={insights.weight.estimate}
-              reason={insights.weight.reason}
-              icon="⚖️"
+              title="Sex"
+              value={insights.sex.estimate}
+              reason={insights.sex.reason}
+              icon="👤"
             />
           )}
-          
-          {insights.ethnicity && (
+
+          {insights.philosopher && (
             <InsightCard
-              title="Ethnicity"
-              value={insights.ethnicity.estimate}
-              reason={insights.ethnicity.reason}
-              icon="🌍"
+              title="Philosopher Match"
+              value={insights.philosopher.philosopher}
+              reason={insights.philosopher.reason}
+              icon="🤔"
+            />
+          )}
+
+          {insights.artStyle && (
+            <InsightCard
+              title="Art Style"
+              value={insights.artStyle.style}
+              reason={insights.artStyle.reason}
+              icon="🎨"
+            />
+          )}
+
+          {insights.cognitiveStyle && (
+            <InsightCard
+              title="Cognitive Style"
+              value={insights.cognitiveStyle.style}
+              reason={insights.cognitiveStyle.reason}
+              icon="🧠"
+            />
+          )}
+
+          {insights.productivityChronotype && (
+            <InsightCard
+              title="Productivity Chronotype"
+              value={insights.productivityChronotype.type}
+              reason={insights.productivityChronotype.reason}
+              icon="⏰"
+            />
+          )}
+
+          {insights.intellectualArchetype && (
+            <InsightCard
+              title="Intellectual Archetype"
+              value={insights.intellectualArchetype.archetype}
+              reason={insights.intellectualArchetype.reason}
+              icon="📚"
+            />
+          )}
+
+          {insights.curiosityCompass && (
+            <InsightCard
+              title="Curiosity Compass"
+              value={insights.curiosityCompass.mode}
+              reason={insights.curiosityCompass.reason}
+              icon="🧭"
+            />
+          )}
+
+          {insights.problemSolvingMode && (
+            <InsightCard
+              title="Problem-Solving Mode"
+              value={insights.problemSolvingMode.mode}
+              reason={insights.problemSolvingMode.reason}
+              icon="🛠️"
+            />
+          )}
+
+          {insights.gameStyleAnalogy && (
+            <InsightCard
+              title="Game Style Analogy"
+              value={insights.gameStyleAnalogy.style}
+              reason={insights.gameStyleAnalogy.reason}
+              icon="🎮"
+            />
+          )}
+
+          {insights.spendingPersona && (
+            <InsightCard
+              title="Spending Persona"
+              value={insights.spendingPersona.persona}
+              reason={insights.spendingPersona.reason}
+              icon="💸"
+            />
+          )}
+
+          {insights.internetAlignment && (
+            <InsightCard
+              title="Internet Alignment"
+              value={insights.internetAlignment.alignment}
+              reason={insights.internetAlignment.reason}
+              icon="🌐"
             />
           )}
 
