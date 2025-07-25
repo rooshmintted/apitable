@@ -112,6 +112,9 @@ const buildSessionTree = (session: Visit[]): SessionTreeNode => {
     return { name: 'Empty session' };
   }
 
+  // Create a wrapped tree structure with multiple rows
+  const nodesPerRow = 5; // Wrap after 5 nodes
+  
   const root: SessionTreeNode = {
     name: session[0].domain || getDomainFromUrl(session[0].url),
     attributes: {
@@ -123,7 +126,11 @@ const buildSessionTree = (session: Visit[]): SessionTreeNode => {
     children: [],
   };
 
-  let current = root;
+  // Build a multi-level tree that wraps
+  let currentLevel: SessionTreeNode[] = [root];
+  let nextLevel: SessionTreeNode[] = [];
+  let nodeCount = 0;
+
   for (let i = 1; i < session.length; i++) {
     const domain = session[i].domain || getDomainFromUrl(session[i].url);
     const node: SessionTreeNode = {
@@ -137,9 +144,21 @@ const buildSessionTree = (session: Visit[]): SessionTreeNode => {
       children: [],
     };
     
-    if (!current.children) current.children = [];
-    current.children.push(node);
-    current = node;
+    // Add to current parent
+    const parentIndex = nodeCount % currentLevel.length;
+    const parent = currentLevel[parentIndex];
+    if (!parent.children) parent.children = [];
+    parent.children.push(node);
+    
+    nextLevel.push(node);
+    nodeCount++;
+    
+    // Move to next level when we've filled this row
+    if (nextLevel.length >= nodesPerRow || i === session.length - 1) {
+      currentLevel = nextLevel;
+      nextLevel = [];
+      nodeCount = 0;
+    }
   }
 
   return root;
@@ -195,8 +214,8 @@ export const RabbitHolesPanel: React.FC<IRabbitHolesPanelProps> = ({
     if (treeContainerRef.current) {
       const dimensions = treeContainerRef.current.getBoundingClientRect();
       setTreeTranslate({
-        x: dimensions.width / 2,
-        y: 50, // Start near the top
+        x: 50, // Start near the left for horizontal layout
+        y: dimensions.height / 2,
       });
     }
   }, [selectedSession]);
@@ -287,7 +306,8 @@ export const RabbitHolesPanel: React.FC<IRabbitHolesPanelProps> = ({
         } as BrowsingSession;
       })
       .filter(session => session.domainCount > 1 || session.duration > 30) // Filter for interesting sessions
-      .sort((a, b) => b.nodeCount - a.nodeCount); // Sort by complexity
+      .sort((a, b) => b.startTime.getTime() - a.startTime.getTime()) // Sort by most recent first
+      .slice(0, 25); // Only take the most recent 25 sessions
   }, [visits]);
 
   const selectedSessionData = useMemo(() => {
@@ -329,11 +349,16 @@ export const RabbitHolesPanel: React.FC<IRabbitHolesPanelProps> = ({
           </div>
         }>
           <text 
-            y="35" 
+            x="0"
+            y="45" 
             textAnchor="middle" 
-            style={{ fontSize: 12, fill: colors.textCommonPrimary }}
+            fill="#FFFFFF"
+            stroke="#FFFFFF"
+            fontSize="11"
+            fontFamily="inherit"
+            style={{ fill: '#FFFFFF !important', stroke: '#FFFFFF' }}
           >
-            {domain.length > 15 ? domain.substring(0, 13) + '...' : domain}
+            {domain.length > 12 ? domain.substring(0, 10) + '..' : domain}
           </text>
         </Tooltip>
       </g>
@@ -434,18 +459,36 @@ export const RabbitHolesPanel: React.FC<IRabbitHolesPanelProps> = ({
                 Session Journey
               </h3>
             <div className={styles.treeContainer}>
+              <svg style={{ width: 0, height: 0, position: 'absolute' }}>
+                <defs>
+                  <marker
+                    id="arrowhead"
+                    markerWidth="10"
+                    markerHeight="7"
+                    refX="9"
+                    refY="3.5"
+                    orient="auto"
+                  >
+                    <polygon
+                      points="0 0, 10 3.5, 0 7"
+                      fill={colors.borderCommonDefault}
+                    />
+                  </marker>
+                </defs>
+              </svg>
               <Tree 
                 data={selectedSessionData.tree}
-                orientation="vertical"
-                pathFunc="step"
-                nodeSize={{ x: 200, y: 100 }}
-                separation={{ siblings: 1, nonSiblings: 2 }}
+                orientation="horizontal"
+                pathFunc="elbow"
+                nodeSize={{ x: 100, y: 100 }}
+                separation={{ siblings: 1.5, nonSiblings: 2 }}
                 translate={treeTranslate}
                 renderCustomNodeElement={renderCustomNode}
                 pathClassFunc={() => styles.treePath}
-                zoom={0.8}
+                zoom={0.85}
                 scaleExtent={{ min: 0.5, max: 2 }}
                 enableLegacyTransitions
+                depthFactor={150}
               />
             </div>
           </div>
