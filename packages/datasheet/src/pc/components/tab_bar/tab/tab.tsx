@@ -268,7 +268,7 @@ export const Tab: FC<React.PropsWithChildren<ITabStateProps>> = memo((props) => 
           extra={
             views &&
             views.length > 0 &&
-            viewCreatable && (
+            viewCreatable && false && (
               <TabAddView
                 viewCount={views ? views.length : 0}
                 activityViewId={activeView}

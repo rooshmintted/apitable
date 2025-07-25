@@ -20,7 +20,6 @@ import * as React from 'react';
 import { useState } from 'react';
 import { ResponsiveTreeMap } from '@nivo/treemap';
 import { ResponsiveCalendar } from '@nivo/calendar';
-import { ResponsiveVoronoi } from '@nivo/voronoi';
 import { useThemeColors } from '@apitable/components';
 import { FieldType, ISegment } from '@apitable/core';
 import styles from './style.module.less';
@@ -48,16 +47,8 @@ interface IActiveHoursData {
   count: number;
 }
 
-interface IVoronoiData {
-  id: string;
-  x: number;
-  y: number;
-  value: number;
-}
-
 export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visibleColumns, getCellValue }) => {
   const colors = useThemeColors();
-  const [activeView, setActiveView] = useState<'treemap' | 'calendar' | 'voronoi'>('treemap');
 
   // Extract domain from URL (between first and second dot)
   const extractDomain = (url: string): string => {
@@ -76,28 +67,59 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
     }
   };
 
-  // Extract date from various date field types
-  const extractDate = (cellValue: any): Date | null => {
+  // Extract date from various date field types and text fields with date patterns
+  const extractDate = (cellValue: any, field: any): Date | null => {
     try {
       if (!cellValue) return null;
       
-      // Handle different date field formats
-      if (typeof cellValue === 'number') {
-        // Unix timestamp
-        return new Date(cellValue);
+      // Handle text fields with date patterns like "2025-07-23 00:32:03"
+      if (field && field.type === FieldType.Text) {
+        let dateString = '';
+        
+        if (typeof cellValue === 'string') {
+          dateString = cellValue;
+        } else if (Array.isArray(cellValue) && cellValue.length > 0) {
+          const segment = cellValue[0] as ISegment;
+          if (segment && segment.text) {
+            dateString = segment.text;
+          }
+        }
+        
+        // Check if the string matches date patterns
+        if (dateString) {
+          // Pattern for "YYYY-MM-DD HH:mm:ss" or similar
+          const datePattern = /(\d{4})-(\d{2})-(\d{2})\s*(\d{2})?:?(\d{2})?:?(\d{2})?/;
+          const match = dateString.match(datePattern);
+          
+          if (match) {
+            const date = new Date(dateString);
+            if (!isNaN(date.getTime())) {
+              return date;
+            }
+          }
+        }
       }
       
-      if (typeof cellValue === 'string') {
-        const date = new Date(cellValue);
-        return isNaN(date.getTime()) ? null : date;
-      }
-      
-      if (Array.isArray(cellValue) && cellValue.length > 0) {
-        // Handle segment-based date fields
-        const segment = cellValue[0] as ISegment;
-        if (segment && segment.text) {
-          const date = new Date(segment.text);
+      // Handle date field types
+      if (field && (field.type === FieldType.DateTime || field.type === FieldType.CreatedTime || field.type === FieldType.LastModifiedTime)) {
+        // Handle different date field formats
+        if (typeof cellValue === 'number') {
+          // Unix timestamp
+          return new Date(cellValue);
+        }
+        
+        if (typeof cellValue === 'string') {
+          const date = new Date(cellValue);
           return isNaN(date.getTime()) ? null : date;
+        }
+        
+        if (Array.isArray(cellValue) && cellValue.length > 0) {
+          // Handle segment-based date fields
+          const segment = cellValue[0] as ISegment;
+          if (segment && segment.text) {
+            const date = new Date(segment.text);
+            return isNaN(date.getTime()) ? null : date;
+          }
         }
       }
       
@@ -107,9 +129,10 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
     }
   };
 
-  // Process data for calendar view
+  // Process data for calendar view - only 2025 data
   const processCalendarData = (): { calendarData: ICalendarData[], dateRange: { from: string, to: string } } => {
     const dateCounts: { [key: string]: number } = {};
+    const targetYear = 2025; // Fixed to 2025
     let minDate: Date | null = null;
     let maxDate: Date | null = null;
 
@@ -117,11 +140,11 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
     rows.forEach(row => {
       visibleColumns.forEach(col => {
         const field = fieldMap[col.fieldId];
-        if (field && (field.type === FieldType.DateTime || field.type === FieldType.CreatedTime || field.type === FieldType.LastModifiedTime)) {
+        if (field) {
           const cellValue = getCellValue(row.recordId, col.fieldId);
-          const date = extractDate(cellValue);
+          const date = extractDate(cellValue, field);
           
-          if (date) {
+          if (date && date.getFullYear() === targetYear) {
             const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
             dateCounts[dayKey] = (dateCounts[dayKey] || 0) + 1;
             
@@ -138,11 +161,9 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
       value
     }));
 
-    // Set date range (default to last year if no data)
-    const from = minDate ? minDate.toISOString().split('T')[0] : 
-                 new Date(new Date().getFullYear() - 1, 0, 1).toISOString().split('T')[0];
-    const to = maxDate ? maxDate.toISOString().split('T')[0] : 
-               new Date().toISOString().split('T')[0];
+    // Set date range to 2025 only
+    const from = new Date(targetYear, 0, 1).toISOString().split('T')[0];
+    const to = new Date(targetYear, 11, 31).toISOString().split('T')[0];
 
     return { calendarData, dateRange: { from, to } };
   };
@@ -150,6 +171,7 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
   // Process data for active hours (24-hour breakdown)
   const processActiveHoursData = (): IActiveHoursData[] => {
     const hourCounts: { [key: number]: number } = {};
+    const targetYear = 2025; // Fixed to 2025
 
     // Initialize all 24 hours
     for (let i = 0; i < 24; i++) {
@@ -160,11 +182,11 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
     rows.forEach(row => {
       visibleColumns.forEach(col => {
         const field = fieldMap[col.fieldId];
-        if (field && (field.type === FieldType.DateTime || field.type === FieldType.CreatedTime || field.type === FieldType.LastModifiedTime)) {
+        if (field) {
           const cellValue = getCellValue(row.recordId, col.fieldId);
-          const date = extractDate(cellValue);
+          const date = extractDate(cellValue, field);
           
-          if (date) {
+          if (date && date.getFullYear() === targetYear) {
             const hour = date.getHours();
             hourCounts[hour]++;
           }
@@ -178,41 +200,7 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
     }));
   };
 
-  // Process data for Voronoi diagram
-  const processVoronoiData = (): IVoronoiData[] => {
-    const activeHours = processActiveHoursData();
-    const { calendarData } = processCalendarData();
-    
-    // Create Voronoi data points combining calendar and hourly data
-    const voronoiData: IVoronoiData[] = [];
-    
-    // Add hourly activity points
-    activeHours.forEach((hourData, index) => {
-      if (hourData.count > 0) {
-        voronoiData.push({
-          id: `hour-${hourData.hour}`,
-          x: (hourData.hour / 24) * 300, // Scale to chart width
-          y: 100 + (hourData.count * 10), // Scale based on count
-          value: hourData.count
-        });
-      }
-    });
-    
-    // Add daily activity points
-    calendarData.forEach((dayData, index) => {
-      const date = new Date(dayData.day);
-      const dayOfYear = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000);
-      
-      voronoiData.push({
-        id: `day-${dayData.day}`,
-        x: (dayOfYear / 365) * 300, // Scale across year
-        y: 200 + (dayData.value * 5), // Scale based on value
-        value: dayData.value
-      });
-    });
 
-    return voronoiData;
-  };
 
   // Process data to create treemap structure
   const processTreemapData = (): ITreemapData => {
@@ -253,58 +241,17 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
   const data = processTreemapData();
   const { calendarData, dateRange } = processCalendarData();
   const activeHoursData = processActiveHoursData();
-  const voronoiData = processVoronoiData();
+
+  // Calculate max value for scaling
+  const maxCalendarValue = Math.max(...calendarData.map(d => d.value), 1);
+  const maxHourValue = Math.max(...activeHoursData.map(h => h.count), 1);
 
   return (
     <div className={styles.treemapContainer}>
-      {/* View Toggle */}
-      <div style={{ display: 'flex', marginBottom: 16, gap: 8 }}>
-        <button
-          onClick={() => setActiveView('treemap')}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: activeView === 'treemap' ? colors.primaryColor : 'transparent',
-            color: activeView === 'treemap' ? 'white' : colors.textCommonPrimary,
-            border: `1px solid ${colors.primaryColor}`,
-            borderRadius: 4,
-            cursor: 'pointer'
-          }}
-        >
-          URL Domain Distribution
-        </button>
-        <button
-          onClick={() => setActiveView('calendar')}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: activeView === 'calendar' ? colors.primaryColor : 'transparent',
-            color: activeView === 'calendar' ? 'white' : colors.textCommonPrimary,
-            border: `1px solid ${colors.primaryColor}`,
-            borderRadius: 4,
-            cursor: 'pointer'
-          }}
-        >
-          Calendar View
-        </button>
-        <button
-          onClick={() => setActiveView('voronoi')}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: activeView === 'voronoi' ? colors.primaryColor : 'transparent',
-            color: activeView === 'voronoi' ? 'white' : colors.textCommonPrimary,
-            border: `1px solid ${colors.primaryColor}`,
-            borderRadius: 4,
-            cursor: 'pointer'
-          }}
-        >
-          Voronoi View
-        </button>
-      </div>
-
-      {activeView === 'treemap' ? (
-        <>
-          <h3 className={styles.sectionTitle}>URL Domain Distribution</h3>
-          <div style={{ height: '400px', width: '100%' }}>
-            <ResponsiveTreeMap
+      {/* URL Domain Distribution */}
+      <h3 className={styles.sectionTitle}>URL Domain Distribution</h3>
+      <div style={{ height: '350px', width: '100%', marginBottom: 32 }}>
+        <ResponsiveTreeMap
           data={data}
           identity="name"
           value="value"
@@ -339,139 +286,134 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
               }
             }
           }}
-              colors={{ scheme: 'nivo' }}
-              animate={true}
-              motionConfig="wobbly"
-            />
-          </div>
-        </>
-      ) : activeView === 'calendar' ? (
-        <>
-          <h3 className={styles.sectionTitle}>Browsing Activity Calendar</h3>
-          <div style={{ height: '300px', width: '100%', marginBottom: 24 }}>
-            <ResponsiveCalendar
-              data={calendarData}
-              from={dateRange.from}
-              to={dateRange.to}
-              emptyColor={colors.bgCommonLower}
-              colors={['#61cdbb', '#97e3d5', '#e8c1a0', '#f47560']}
-              margin={{ top: 40, right: 40, bottom: 40, left: 40 }}
-              yearSpacing={40}
-              monthBorderColor={colors.borderCommonDefault}
-              dayBorderWidth={2}
-              dayBorderColor={colors.borderCommonDefault}
-              legends={[
-                {
-                  anchor: 'bottom-right',
-                  direction: 'row',
-                  translateY: 36,
-                  itemCount: 4,
-                  itemWidth: 42,
-                  itemHeight: 36,
-                  itemsSpacing: 14,
-                  itemDirection: 'right-to-left'
-                }
-              ]}
-              theme={{
-                background: colors.bgCommonDefault,
-                text: {
-                  fill: colors.textCommonPrimary
-                },
-                tooltip: {
-                  container: {
-                    background: colors.bgCommonHigh,
-                    color: colors.textCommonPrimary,
-                    fontSize: 12,
-                    borderRadius: 4,
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
-                  }
-                }
-              }}
-            />
-          </div>
+          colors={{ scheme: 'nivo' }}
+          animate={true}
+          motionConfig="wobbly"
+        />
+      </div>
 
-          <h3 className={styles.sectionTitle}>Active Hours (24h)</h3>
-          <div style={{ height: '200px', width: '100%' }}>
-            <div style={{ 
-              display: 'flex', 
-              height: '100%', 
-              alignItems: 'end', 
-              justifyContent: 'space-between',
-              padding: '0 8px'
-            }}>
-              {activeHoursData.map((hourData) => (
-                <div
-                  key={hourData.hour}
-                  style={{
-                    width: 'calc(100% / 24 - 2px)',
-                    height: `${Math.max(4, (hourData.count / Math.max(...activeHoursData.map(h => h.count))) * 100)}%`,
-                    backgroundColor: hourData.count > 0 ? colors.primaryColor : colors.bgCommonLower,
-                    borderRadius: '2px 2px 0 0',
-                    position: 'relative',
-                    cursor: 'pointer'
-                  }}
-                  title={`${hourData.hour}:00 - ${hourData.count} activities`}
-                >
-                  {hourData.hour % 6 === 0 && (
-                    <span style={{
-                      position: 'absolute',
-                      bottom: -20,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      fontSize: 10,
-                      color: colors.textCommonTertiary
-                    }}>
-                      {hourData.hour}h
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      ) : (
-        <>
-          <h3 className={styles.sectionTitle}>Activity Patterns (Voronoi)</h3>
-          <div style={{ height: '400px', width: '100%' }}>
-            <ResponsiveVoronoi
-              data={voronoiData}
-              xDomain={[0, 300]}
-              yDomain={[0, 400]}
-              cellComponent={({ cell, borderWidth, borderColor }) => (
-                <polygon
-                  points={cell.points.map(p => `${p.x},${p.y}`).join(' ')}
-                  fill={colors.primaryColor}
-                  fillOpacity={0.3}
-                  stroke={borderColor}
-                  strokeWidth={borderWidth}
-                />
-              )}
-              margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-              enableLinks
-              linkLineWidth={1}
-              linkLineColor={colors.borderCommonDefault}
-              enableSites
-              siteSize={6}
-              siteColor={colors.primaryColor}
-              theme={{
-                background: colors.bgCommonDefault,
-                text: {
-                  fill: colors.textCommonPrimary
-                },
-                tooltip: {
-                  container: {
-                    background: colors.bgCommonHigh,
-                    color: colors.textCommonPrimary,
-                    fontSize: 12,
-                    borderRadius: 4,
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
-                  }
+      {/* Calendar View - Always shown */}
+      <h3 className={styles.sectionTitle}>Activity Calendar (2025)</h3>
+      <div style={{ height: '200px', width: '100%', marginBottom: 24 }}>
+        {calendarData.length > 0 ? (
+          <ResponsiveCalendar
+            data={calendarData}
+            from={dateRange.from}
+            to={dateRange.to}
+            emptyColor={colors.bgCommonLower}
+            colors={[
+              colors.bgCommonLower,
+              '#d4e4f7',
+              '#9ecae1',
+              '#6baed6',
+              '#3182bd'
+            ]}
+            minValue={0}
+            maxValue={maxCalendarValue}
+            margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+            yearSpacing={40}
+            monthBorderColor={colors.borderCommonDefault}
+            dayBorderWidth={2}
+            dayBorderColor={colors.bgCommonDefault}
+            monthLegendPosition="before"
+            monthLegendOffset={10}
+            legends={[
+              {
+                anchor: 'bottom-right',
+                direction: 'row',
+                translateY: 36,
+                itemCount: 4,
+                itemWidth: 42,
+                itemHeight: 36,
+                itemsSpacing: 14,
+                itemDirection: 'right-to-left'
+              }
+            ]}
+            theme={{
+              background: colors.bgCommonDefault,
+              textColor: colors.textCommonPrimary,
+              fontSize: 11,
+              tooltip: {
+                container: {
+                  background: colors.bgCommonHigh,
+                  color: colors.textCommonPrimary,
+                  fontSize: 12,
+                  borderRadius: 4,
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
                 }
-              }}
-            />
+              }
+            }}
+          />
+        ) : (
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            height: '100%',
+            color: colors.textCommonTertiary
+          }}>
+            No date data found for 2025
           </div>
-        </>
-      )}
+        )}
+      </div>
+
+      {/* Active Hours */}
+      <h3 className={styles.sectionTitle}>Active Hours (24h)</h3>
+      <div style={{ height: '150px', width: '100%', paddingBottom: 20 }}>
+        <div style={{ 
+          display: 'flex', 
+          height: '100%', 
+          alignItems: 'end', 
+          justifyContent: 'space-between',
+          padding: '0 8px',
+          gap: '2px'
+        }}>
+          {activeHoursData.map((hourData) => {
+            const heightPercent = maxHourValue > 0 ? (hourData.count / maxHourValue) * 100 : 0;
+            return (
+              <div
+                key={hourData.hour}
+                style={{
+                  flex: 1,
+                  height: `${Math.max(2, heightPercent)}%`,
+                  backgroundColor: hourData.count > 0 ? colors.primaryColor : colors.bgCommonLower,
+                  borderRadius: '2px 2px 0 0',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                title={`${hourData.hour}:00 - ${hourData.count} activities`}
+              >
+                {hourData.count > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: -18,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    fontSize: 9,
+                    color: colors.textCommonTertiary,
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {hourData.count}
+                  </span>
+                )}
+                {hourData.hour % 3 === 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    bottom: -18,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    fontSize: 10,
+                    color: colors.textCommonTertiary
+                  }}>
+                    {hourData.hour}h
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }; 

@@ -119,7 +119,9 @@ export const Workspace: React.FC<React.PropsWithChildren<unknown>> = () => {
   const [clickType, setClickType] = useState<SideBarClickType>(SideBarClickType.None);
   const [panelVisible, setPanelVisible] = useState(false);
   const [newTdbId, setNewTdbId] = useState('');
-  const sideBarVisible = useAppSelector((state) => state.space.sideBarVisible);
+  // Hidden: Default sidebar to hidden
+  const sideBarVisibleFromState = useAppSelector((state) => state.space.sideBarVisible);
+  const sideBarVisible = false; // Always hide sidebar
   const showUpgradeSpaceModal = useRef(false);
 
   usePaymentReminder();
@@ -337,26 +339,29 @@ export const Workspace: React.FC<React.PropsWithChildren<unknown>> = () => {
                     <CommonSide />
                   </div>
                 </div>
-                <Tooltip
-                  title={`${!sideBarVisible ? t(Strings.expand) : t(Strings.hidden)} ${getShortcutKeyString(ShortcutActionName.ToggleCatalogPanel)}`}
-                  placement={!sideBarVisible ? 'right' : 'bottom'}
-                  arrowPointAtCenter
-                >
-                  <div
-                    className={closeBtnClass}
-                    onClick={() => {
-                      handleSetSideBarByUser(!sideBarVisible, panelVisible);
-                    }}
-                    onMouseEnter={() => {
-                      if (!sideBarVisible && !templeVisible) {
-                        setTempleVisible(true);
-                      }
-                    }}
-                    data-test-id="sidebar-toggle-btn"
+                {/* Hidden: Sidebar toggle button */}
+                {false && (
+                  <Tooltip
+                    title={`${!sideBarVisible ? t(Strings.expand) : t(Strings.hidden)} ${getShortcutKeyString(ShortcutActionName.ToggleCatalogPanel)}`}
+                    placement={!sideBarVisible ? 'right' : 'bottom'}
+                    arrowPointAtCenter
                   >
-                    {!sideBarVisible ? <CollapseOpenOutlined /> : <CollapseOutlined />}
-                  </div>
-                </Tooltip>
+                    <div
+                      className={closeBtnClass}
+                      onClick={() => {
+                        handleSetSideBarByUser(!sideBarVisible, panelVisible);
+                      }}
+                      onMouseEnter={() => {
+                        if (!sideBarVisible && !templeVisible) {
+                          setTempleVisible(true);
+                        }
+                      }}
+                      data-test-id="sidebar-toggle-btn"
+                    >
+                      {!sideBarVisible ? <CollapseOpenOutlined /> : <CollapseOutlined />}
+                    </div>
+                  </Tooltip>
+                )}
               </div>
             }
             panelRight={<div className={styles.splitRight}>{children}</div>}

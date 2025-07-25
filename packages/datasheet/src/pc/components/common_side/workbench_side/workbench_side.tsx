@@ -387,16 +387,19 @@ export const WorkbenchSide: FC<React.PropsWithChildren<unknown>> = () => {
                 <div className={styles.catalogActions}>
                   {rootManageable && (
                     <>
-                      <LinkButton
-                        underline={false}
-                        component="div"
-                        prefixIcon={<AddOutlined color={colors.textCommonSecondary} size={12} />}
-                        color={colors.textCommonSecondary}
-                        onClick={openDefaultMenu}
-                        id={WORKBENCH_SIDE_ID.ADD_NODE_BTN}
-                      >
-                        <Tooltip title={t(Strings.new_node_tooltip)}>{t(Strings.new_node_btn_title)}</Tooltip>
-                      </LinkButton>
+                      {/* Hidden: +Add button */}
+                      {false && (
+                        <LinkButton
+                          underline={false}
+                          component="div"
+                          prefixIcon={<AddOutlined color={colors.textCommonSecondary} size={12} />}
+                          color={colors.textCommonSecondary}
+                          onClick={openDefaultMenu}
+                          id={WORKBENCH_SIDE_ID.ADD_NODE_BTN}
+                        >
+                          <Tooltip title={t(Strings.new_node_tooltip)}>{t(Strings.new_node_btn_title)}</Tooltip>
+                        </LinkButton>
+                      )}
                       <LinkButton
                         underline={false}
                         component="div"
@@ -408,17 +411,20 @@ export const WorkbenchSide: FC<React.PropsWithChildren<unknown>> = () => {
                       >
                         <Tooltip title={t(Strings.import_from_excel_tooltip)}>{t(Strings.import_file_btn_title)}</Tooltip>
                       </LinkButton>
-                      <LinkButton
-                        underline={false}
-                        component="div"
-                        prefixIcon={<FolderAddOutlined color={colors.textCommonSecondary} size={12} />}
-                        color={colors.textCommonSecondary}
-                        onClick={() => {
-                          addTreeNode(rootId, ConfigConstant.NodeType.FOLDER);
-                        }}
-                      >
-                        <Tooltip title={t(Strings.new_folder_tooltip)}>{t(Strings.folder)}</Tooltip>
-                      </LinkButton>
+                      {/* Hidden: Folder button */}
+                      {false && (
+                        <LinkButton
+                          underline={false}
+                          component="div"
+                          prefixIcon={<FolderAddOutlined color={colors.textCommonSecondary} size={12} />}
+                          color={colors.textCommonSecondary}
+                          onClick={() => {
+                            addTreeNode(rootId, ConfigConstant.NodeType.FOLDER);
+                          }}
+                        >
+                          <Tooltip title={t(Strings.new_folder_tooltip)}>{t(Strings.folder)}</Tooltip>
+                        </LinkButton>
+                      )}
                     </>
                   )}
                 </div>

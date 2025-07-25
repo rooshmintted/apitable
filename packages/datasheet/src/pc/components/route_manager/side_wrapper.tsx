@@ -91,7 +91,8 @@ export const SideWrapper = (props: { children: any }) => {
     <div className={'layout-row f-g-1 ' + styles.spaceContainer} onScroll={scrollFix}>
       {!isSkuPage && (
         <>
-          <ComponentDisplay minWidthCompatible={ScreenSize.md}>{!isWorkbench && <Navigation />}</ComponentDisplay>
+          {/* Hidden: Left sidebar navigation */}
+          <ComponentDisplay minWidthCompatible={ScreenSize.md}>{!isWorkbench && false && <Navigation />}</ComponentDisplay>
 
           <ComponentDisplay maxWidthCompatible={ScreenSize.md}>
             <MobileSideBar />

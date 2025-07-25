@@ -186,7 +186,8 @@ export const NodeInfoBar: FC<React.PropsWithChildren<INodeInfoBarProps>> = ({ da
             </Typography>
           </div>
         )}
-        {!hiddenModule?.favorite && (!editing || (editing && _showDescription)) && !embedId && (
+        {/* Hidden: Pin/Favorite functionality */}
+        {!hiddenModule?.favorite && (!editing || (editing && _showDescription)) && !embedId && false && (
           <NodeFavoriteStatus nodeId={nodeId} enabled={favoriteEnabled} />
         )}
         {!hiddenModule?.permission && (!editing || (editing && _showDescription)) && !isIframe() && !embedId && (
