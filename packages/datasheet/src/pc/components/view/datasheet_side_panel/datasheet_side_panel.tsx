@@ -27,9 +27,11 @@ import { getStorage, setStorage, StorageName, StorageMethod, deleteStorageByKey 
 import { URLTreemap } from './url_treemap';
 import { AIChatInterface } from './ai_chat_interface';
 import { InsightsPanel } from './insights_panel';
+import { RabbitHolesPanel } from './rabbit_holes_panel';
+import { BiographyPanel } from './biography_panel';
 import styles from './style.module.less';
 
-type TabType = 'chat' | 'dataViz' | 'insights';
+type TabType = 'chat' | 'dataViz' | 'insights' | 'rabbitHoles' | 'biography';
 
 export const DatasheetSidePanel: React.FC = () => {
   const colors = useThemeColors();
@@ -122,10 +124,22 @@ export const DatasheetSidePanel: React.FC = () => {
                   >
                     Insights
                   </div>
+                  <div 
+                    className={`${styles.tab} ${activeTab === 'rabbitHoles' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('rabbitHoles')}
+                  >
+                    Rabbit Holes
+                  </div>
+                  <div 
+                    className={`${styles.tab} ${activeTab === 'biography' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('biography')}
+                  >
+                    Biography
+                  </div>
                 </div>
                 
-                {/* Settings button - only show on chat tab */}
-                {activeTab === 'chat' && (
+                {/* Settings button - show on chat and biography tabs */}
+                {(activeTab === 'chat' || activeTab === 'biography') && (
                   <IconButton
                     icon={SettingOutlined}
                     onClick={() => {
@@ -160,6 +174,25 @@ export const DatasheetSidePanel: React.FC = () => {
                 
                 {activeTab === 'insights' && (
                   <InsightsPanel 
+                    rows={rows}
+                    fieldMap={fieldMap}
+                    visibleColumns={visibleColumns}
+                    getCellValue={getCellValue}
+                    apiKey={apiKey}
+                  />
+                )}
+                
+                {activeTab === 'rabbitHoles' && (
+                  <RabbitHolesPanel 
+                    rows={rows}
+                    fieldMap={fieldMap}
+                    visibleColumns={visibleColumns}
+                    getCellValue={getCellValue}
+                  />
+                )}
+                
+                {activeTab === 'biography' && (
+                  <BiographyPanel 
                     rows={rows}
                     fieldMap={fieldMap}
                     visibleColumns={visibleColumns}
