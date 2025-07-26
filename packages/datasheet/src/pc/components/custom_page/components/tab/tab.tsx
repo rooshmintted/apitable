@@ -40,11 +40,13 @@ export const Tab: React.FC<ITabProps> = ({ setOpenSetting, isMobile, setNodeId }
                 {t(Strings.form_tab_setting)}
               </TextButton>
             )}
+            {/* Hide share button
             {canShare && (
               <TextButton prefixIcon={<ShareOutlined />} size="x-small" className={'!vk-px-1'} onClick={() => setNodeId(customPageId!)}>
                 {t(Strings.form_tab_share)}
               </TextButton>
             )}
+            */}
           </div>
         )}
       </div>
@@ -85,11 +87,13 @@ export const Tab: React.FC<ITabProps> = ({ setOpenSetting, isMobile, setNodeId }
               {t(Strings.form_tab_setting)}
             </TextButton>
           )}
+          {/* Hide share button
           {canShare && (
             <TextButton prefixIcon={<ShareOutlined />} size="small" onClick={() => setNodeId(customPageId!)}>
               {t(Strings.form_tab_share)}
             </TextButton>
           )}
+          */}
         </div>
       )}
     </div>

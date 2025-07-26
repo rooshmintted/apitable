@@ -114,10 +114,12 @@ const AlbumDetail = () => {
           <ChevronLeftOutlined color="currentColor" />
           <span className={styles.albumName}>{album.name}</span>
         </div>
+        {/* Hide share button
         <div className={styles.shareBtn} onClick={handleCopyShare}>
           <ShareOutlined currentColor />
           {t(Strings.share)}
         </div>
+        */}
       </header>
       <div className={styles.albumCover}>
         <Image src={album.cover} alt="album cover" layout="fill" objectFit="cover" />
@@ -175,11 +177,13 @@ const AlbumDetail = () => {
         </div>
         <div className={styles.albumContentRight}>
           <div className={styles.albumRightContent} dangerouslySetInnerHTML={{ __html: md.render(album.content) }} />
+          {/* Hide share button
           <div className={styles.bottomShare}>
             <Button shape="round" variant="fill" color="primary" prefixIcon={<ShareOutlined currentColor />} onClick={handleCopyShare}>
               {t(Strings.share)}
             </Button>
           </div>
+          */}
           {env.TEMPLATE_FEEDBACK_FORM_URL && (
             <div className={styles.albumAdvise} onClick={() => navigationToUrl(`${env.TEMPLATE_FEEDBACK_FORM_URL}`)}>
               <Image layout="fill" objectFit="contain" src={isZh ? albumTemplateZhPng : albumTemplateEnPng} alt="" />

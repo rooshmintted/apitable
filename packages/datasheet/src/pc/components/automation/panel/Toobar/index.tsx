@@ -58,6 +58,7 @@ export const MobileToolBar: React.FC<React.PropsWithChildren<{ title?: string }>
 
       <Box >
 
+        {/* Hide share button
         <OrEmpty
           visible={permission.sharable && automationState?.scenario === AutomationScenario.node}>
           {
@@ -80,6 +81,7 @@ export const MobileToolBar: React.FC<React.PropsWithChildren<{ title?: string }>
             )
           }
         </OrEmpty>
+        */}
 
         <OrEmpty visible={automationState?.scenario === AutomationScenario.node}>
           <IconButton

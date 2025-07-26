@@ -75,9 +75,9 @@ export const ToolBarWrapper: React.FC<React.PropsWithChildren<IToolBarWrapperPro
         )}
         {!hideToolBar && <Toolbar />}
         <div className={styles.toolRight}>
-          {!(isCalendarView && isMobile) && <Find datasheetId={datasheetId!} />}
+          {/* {!(isCalendarView && isMobile) && <Find datasheetId={datasheetId!} />} */}
           <MoreTool />
-          {showWidgetBtn && <WidgetTool />}
+          {/* {showWidgetBtn && <WidgetTool />} */}
         </div>
       </div>
       {!hideViewList && !isOnlyView && (

@@ -91,15 +91,8 @@ export const View: React.FC<React.PropsWithChildren<any>> = () => {
   const router = useRouter();
   const isViewLock = useShowViewLockModal();
 
-  // State for managing side panel visibility - default to visible and 50% width
+  // State for managing side panel visibility - default to visible with 75% width
   const [sidePanelVisible, setSidePanelVisible] = React.useState(true);
-  const [sidePanelWidth, setSidePanelWidth] = React.useState(() => {
-    // Initialize to 50% of window width, with a minimum of 400px
-    if (typeof window !== 'undefined') {
-      return Math.max(window.innerWidth * 0.5, 400);
-    }
-    return 600; // Fallback width
-  });
 
   useEffect(() => {
     if (!activeRecordId) {
@@ -126,17 +119,7 @@ export const View: React.FC<React.PropsWithChildren<any>> = () => {
     router.replace(urlObj.pathname + urlObj.search);
   }, [rows, activeRecordId, datasheetId, views, isSideRecordOpen, router]);
 
-  // Handle window resize to maintain panel at 50% width
-  useEffect(() => {
-    const handleResize = () => {
-      if (sidePanelVisible) {
-        setSidePanelWidth(Math.max(window.innerWidth * 0.5, 400));
-      }
-    };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [sidePanelVisible]);
 
   useEffect(() => {
     if (!datasheetId || shareId || templateId || embedId) return;
@@ -219,7 +202,7 @@ export const View: React.FC<React.PropsWithChildren<any>> = () => {
           onClick={() => setSidePanelVisible(!sidePanelVisible)}
           style={{
             position: 'absolute',
-            right: sidePanelVisible ? sidePanelWidth - 12 : -12,
+            right: sidePanelVisible ? '74%' : '-12px',
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 10,
@@ -254,6 +237,7 @@ export const View: React.FC<React.PropsWithChildren<any>> = () => {
             }
 
             // Desktop with side panel - use split panel
+            const sidePanelWidth = width * 0.75; // Side panel takes 75% of width
             return (
               <VikaSplitPanel
                 panelLeft={renderViewComponent({ height, width: width - sidePanelWidth })}
@@ -261,10 +245,9 @@ export const View: React.FC<React.PropsWithChildren<any>> = () => {
                 split="vertical"
                 primary="first"
                 size={width - sidePanelWidth}
-                minSize={width * 0.5}
-                maxSize={width - 250}
-                onChange={(newSize: number) => setSidePanelWidth(width - newSize)}
-                allowResize={true}
+                minSize={width - sidePanelWidth}
+                maxSize={width - sidePanelWidth}
+                allowResize={false}
                 style={{ width: '100%', height: '100%' }}
               />
             );

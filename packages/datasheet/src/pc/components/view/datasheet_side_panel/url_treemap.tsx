@@ -130,11 +130,9 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
   };
 
   // Process data for calendar view - only 2025 data
-  const processCalendarData = (): { calendarData: ICalendarData[], dateRange: { from: string, to: string } } => {
+  const processCalendarData = (): ICalendarData[] => {
     const dateCounts: { [key: string]: number } = {};
-    const targetYear = 2025; // Fixed to 2025
-    let minDate: Date | null = null;
-    let maxDate: Date | null = null;
+    const targetYear = 2025; // Target only 2025
 
     // Find date fields and count occurrences per day
     rows.forEach(row => {
@@ -144,28 +142,23 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
           const cellValue = getCellValue(row.recordId, col.fieldId);
           const date = extractDate(cellValue, field);
           
+          // Strictly filter for 2025 dates only
           if (date && date.getFullYear() === targetYear) {
             const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-            dateCounts[dayKey] = (dateCounts[dayKey] || 0) + 1;
-            
-            if (!minDate || date < minDate) minDate = date;
-            if (!maxDate || date > maxDate) maxDate = date;
+            if (dayKey.startsWith('2025-')) {
+              dateCounts[dayKey] = (dateCounts[dayKey] || 0) + 1;
+            }
           }
         }
       });
     });
 
     // Convert to calendar format
-    const calendarData = Object.entries(dateCounts).map(([day, value]) => ({
-      day,
-      value
-    }));
-
-    // Set date range to 2025 only
-    const from = new Date(targetYear, 0, 1).toISOString().split('T')[0];
-    const to = new Date(targetYear, 11, 31).toISOString().split('T')[0];
-
-    return { calendarData, dateRange: { from, to } };
+    return Object.entries(dateCounts)
+      .map(([day, value]) => ({
+        day,
+        value
+      }));
   };
 
   // Process data for active hours (24-hour breakdown)
@@ -199,8 +192,6 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
       count
     }));
   };
-
-
 
   // Process data to create treemap structure
   const processTreemapData = (): ITreemapData => {
@@ -239,7 +230,7 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
   };
 
   const data = processTreemapData();
-  const { calendarData, dateRange } = processCalendarData();
+  const calendarData = processCalendarData();
   const activeHoursData = processActiveHoursData();
 
   // Calculate max value for scaling
@@ -292,14 +283,14 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
         />
       </div>
 
-      {/* Calendar View - Always shown */}
+      {/* Calendar View - Always shown for 2025 */}
       <h3 className={styles.sectionTitle}>Activity Calendar (2025)</h3>
-      <div style={{ height: '200px', width: '100%', marginBottom: 24 }}>
+      <div style={{ height: '180px', width: '100%', marginBottom: 24 }}>
         {calendarData.length > 0 ? (
           <ResponsiveCalendar
             data={calendarData}
-            from={dateRange.from}
-            to={dateRange.to}
+            from="2025-01-02" // This prop ensures the calendar starts in 2025
+            to="2025-12-31"   // This prop ensures the calendar ends in 2025
             emptyColor={colors.bgCommonLower}
             colors={[
               colors.bgCommonLower,
@@ -310,13 +301,16 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
             ]}
             minValue={0}
             maxValue={maxCalendarValue}
-            margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+            margin={{ top: 20, right: 20, bottom: 10, left: 20 }}
             yearSpacing={40}
             monthBorderColor={colors.borderCommonDefault}
             dayBorderWidth={2}
             dayBorderColor={colors.bgCommonDefault}
             monthLegendPosition="before"
             monthLegendOffset={10}
+            yearLegend={(year) => year}
+            yearLegendPosition="after"
+            yearLegendOffset={10}
             legends={[
               {
                 anchor: 'bottom-right',
@@ -416,4 +410,4 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
       </div>
     </div>
   );
-}; 
+};

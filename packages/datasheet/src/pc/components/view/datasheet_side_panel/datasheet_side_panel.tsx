@@ -38,7 +38,7 @@ export const DatasheetSidePanel: React.FC = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [tempApiKey, setTempApiKey] = useState('');
-  const [activeTab, setActiveTab] = useState<TabType>('chat');
+  const [activeTab, setActiveTab] = useState<TabType>('dataViz');
   
   // Load API key from localStorage on mount
   React.useEffect(() => {
@@ -103,26 +103,14 @@ export const DatasheetSidePanel: React.FC = () => {
       <div className={styles.content}>
           {firstRow ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 {/* Tab Navigation */}
                 <div className={styles.tabNavigation}>
-                  <div 
-                    className={`${styles.tab} ${activeTab === 'chat' ? styles.activeTab : ''}`}
-                    onClick={() => setActiveTab('chat')}
-                  >
-                    Chat
-                  </div>
                   <div 
                     className={`${styles.tab} ${activeTab === 'dataViz' ? styles.activeTab : ''}`}
                     onClick={() => setActiveTab('dataViz')}
                   >
                     Data Viz
-                  </div>
-                  <div 
-                    className={`${styles.tab} ${activeTab === 'insights' ? styles.activeTab : ''}`}
-                    onClick={() => setActiveTab('insights')}
-                  >
-                    Insights
                   </div>
                   <div 
                     className={`${styles.tab} ${activeTab === 'rabbitHoles' ? styles.activeTab : ''}`}
@@ -131,10 +119,22 @@ export const DatasheetSidePanel: React.FC = () => {
                     Rabbit Holes
                   </div>
                   <div 
+                    className={`${styles.tab} ${activeTab === 'insights' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('insights')}
+                  >
+                    Insights
+                  </div>
+                  <div 
                     className={`${styles.tab} ${activeTab === 'biography' ? styles.activeTab : ''}`}
                     onClick={() => setActiveTab('biography')}
                   >
                     Biography
+                  </div>
+                  <div 
+                    className={`${styles.tab} ${activeTab === 'chat' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('chat')}
+                  >
+                    Chat
                   </div>
                 </div>
                 

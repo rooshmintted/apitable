@@ -446,6 +446,7 @@ export const FolderShowcase: FC<React.PropsWithChildren<IFolderShowcaseProps>> =
                 </div>
               </div>
               <div className={styles.btnGroup}>
+                {/* Hide share button
                 {permissions.sharable && (
                   <Button
                     className={styles.shareBtn}
@@ -457,6 +458,7 @@ export const FolderShowcase: FC<React.PropsWithChildren<IFolderShowcaseProps>> =
                     {t(Strings.share)}
                   </Button>
                 )}
+                */}
                 {isInDingTalk && socialInfo?.dingTalkSuiteKey && socialInfo?.dingTalkCorpId && Boolean(socialInfo?.dingTalkDaStatus) && (
                   <DingTalkDa suiteKey={socialInfo.dingTalkSuiteKey} corpId={socialInfo.dingTalkCorpId} bizAppId={folderId} />
                 )}

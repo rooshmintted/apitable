@@ -92,6 +92,7 @@ import { ToolHandleType } from './interface';
 import { ToolItem } from './tool_item';
 import { Undo } from './undo';
 import styles from './style.module.less';
+import { ImportFile } from 'pc/components/catalog/import_file';
 
 // Toolbar label and icon adaptation rules when in-table lookup is activated.
 // width:[1180,+infinity) -> Show all.
@@ -198,6 +199,7 @@ const ToolbarBase = () => {
     const datasheet = Selectors.getDatasheet(state);
     return datasheet!.nodeShared;
   });
+  const importModalNodeId = useAppSelector((state) => state.catalogTree.importModalNodeId);
   const visualizationEditable = permissions.visualizationEditable || permissions.editable;
   const kanbanFieldId = useAppSelector((state) => Selectors.getKanbanFieldId(state));
   const groupIds = useAppSelector(Selectors.getKanbanGroupMapIds);
@@ -252,6 +254,12 @@ const ToolbarBase = () => {
       //   appendRowCallback(newRecordId);
       // }
     }
+  };
+
+  // Function to open import modal instead of inserting record
+  const openImportModal = () => {
+    // Get the current datasheet node ID to use as parent for import
+    dispatch(StoreActions.updateImportModalNodeId(activeNodeId));
   };
 
   // Split transactions function
@@ -666,7 +674,7 @@ const ToolbarBase = () => {
       ),
       label: t(Strings.find),
       key: 'find',
-      show: true,
+      show: false,
     },
     {
       component: (
@@ -688,12 +696,12 @@ const ToolbarBase = () => {
     {
       component: <ForeignForm key="foreignForm" className={styles.toolbarItem} showLabel={showIconBarLabel} />,
       key: 'foreignForm',
-      show: isGridView && !shareId && !templateId && !mirrorId && embedSetting.formBtn,
+      show: false,
     },
     {
       component: <MirrorList key="mirror" className={styles.toolbarItem} showLabel={showIconBarLabel} />,
       key: 'mirror',
-      show: !shareId && !templateId && !mirrorId && (!embedId || (embedId && embedSetting.mirrorBtn)),
+      show: false,
     },
     {
       component: (
@@ -710,7 +718,7 @@ const ToolbarBase = () => {
         />
       ),
       key: 'api',
-      show: !isGanttView && !shareId && !templateId && !mirrorId && embedSetting.apiBtn,
+      show: false,
     },
     {
       component: (
@@ -726,7 +734,7 @@ const ToolbarBase = () => {
         />
       ),
       key: 'widget',
-      show: embedSetting.widgetBtn,
+      show: false,
     },
     {
       component: (
@@ -742,7 +750,7 @@ const ToolbarBase = () => {
         />
       ),
       key: 'robot',
-      show: !mirrorId && !shareId && !templateId && embedSetting.robotBtn, // Open the portal only in the preview environment before going online.
+      show: false,
     },
     {
       component: (
@@ -763,7 +771,7 @@ const ToolbarBase = () => {
     {
       component: <ArchivedRecords key="archived-records" className={styles.toolbarItem} showLabel={showIconBarLabel} />,
       key: 'archivedRecords',
-      show: !shareId && !mirrorId && !shareId && !templateId && permissions.manageable,
+      show: false,
     },
   ];
   const iframeShowTool = shareId ? !isIframe() : true;
@@ -781,7 +789,7 @@ const ToolbarBase = () => {
             showLabel={showIconBarLabel}
             disabled={!permissions.rowCreatable}
             className={styles.toolbarItem}
-            onClick={appendRecord}
+            onClick={openImportModal}
             icon={<AddCircleOutlined size={16} color={colors.secondLevelText} className={styles.toolIcon} />}
             text={isGanttView ? t(Strings.gantt_add_record) : t(Strings.insert_record)}
             id={'toolInsertRecord'}
@@ -929,6 +937,7 @@ const ToolbarBase = () => {
             />
           </Display>
         )}
+        {/* Hide Sort button
         {!isOrgView && !isCalendarView && embedSetting.basicTools && (
           <Display type={ToolHandleType.ViewSort}>
             <ToolItem
@@ -944,6 +953,8 @@ const ToolbarBase = () => {
             />
           </Display>
         )}
+        */}
+        {/* Hide Row height button
         {!isOrgView && !isCalendarView && !isKanbanView && !isGalleryView && !isMobile && embedSetting.basicTools && (
           <Display type={ToolHandleType.ChangeRowHeight}>
             <ToolItem
@@ -960,6 +971,8 @@ const ToolbarBase = () => {
             />
           </Display>
         )}
+        */}
+        {/* Hide share button
         {!shareId && !templateId && Boolean(activeNode) && !embedId && !isIframe() && (
           <Display type={ToolHandleType.Share}>
             <ToolItem
@@ -972,6 +985,7 @@ const ToolbarBase = () => {
             />
           </Display>
         )}
+        */}
       </div>
       <Share nodeId={shareNodeId} onClose={() => setShareNodeId('')} />
       {!isMobile && (
@@ -1008,6 +1022,12 @@ const ToolbarBase = () => {
             popupItemClassName={styles.collapsePopupItem}
           />
         </div>
+      )}
+      {importModalNodeId && (
+        <ImportFile 
+          parentId={importModalNodeId} 
+          onCancel={() => dispatch(StoreActions.updateImportModalNodeId(''))} 
+        />
       )}
     </div>
   );

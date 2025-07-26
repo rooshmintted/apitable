@@ -324,6 +324,7 @@ export const AutomationPanel: FC<{ onClose?: () => void; resourceId?: string, pa
               </Box>
 
               <Box display="flex" alignItems="center">
+                {/* Hide share button
                 <OrEmpty visible={permission.sharable && automationState?.scenario === AutomationScenario.node}>
                   {nodeItem && (
                     <ToolItem
@@ -350,6 +351,7 @@ export const AutomationPanel: FC<{ onClose?: () => void; resourceId?: string, pa
                     />
                   )}
                 </OrEmpty>
+                */}
 
                 <OrEmpty visible={automationState?.scenario === AutomationScenario.node}>
                   <TextButton

@@ -104,6 +104,7 @@ export const ToolBar: React.FC<React.PropsWithChildren<IToolBarProps>> = (props)
           />
         </Trigger>
       )}
+      {/* Hide share button
       {showShareBtn && (
         <ToolItem
           icon={<ShareOutlined size={16} color={nodeShared ? colors.primaryColor : colors.secondLevelText} className={styles.toolIcon} />}
@@ -114,6 +115,7 @@ export const ToolBar: React.FC<React.PropsWithChildren<IToolBarProps>> = (props)
           showLabel={showLabel}
         />
       )}
+      */}
       {<ShareModal formId={formId} visible={visible} onClose={() => setVisible(false)} />}
     </>
   );
