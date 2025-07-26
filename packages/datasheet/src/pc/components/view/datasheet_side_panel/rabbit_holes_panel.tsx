@@ -16,10 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import React, { useMemo, useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import Tree from 'react-d3-tree';
-import { useThemeColors, FloatUiTooltip as Tooltip } from '@apitable/components';
-import { FieldType, IField } from '@apitable/core';
+import { useThemeColors, Tooltip, IconButton } from '@apitable/components';
+import { FieldType, ISegment, IField } from '@apitable/core';
+import { DownloadOutlined } from '@apitable/icons';
+import html2canvas from 'html2canvas';
 import styles from './rabbit_holes_panel.module.less';
 
 interface IRabbitHolesPanelProps {
@@ -208,6 +211,56 @@ export const RabbitHolesPanel: React.FC<IRabbitHolesPanelProps> = ({
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [treeTranslate, setTreeTranslate] = useState({ x: 0, y: 0 });
   const treeContainerRef = React.useRef<HTMLDivElement>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+
+  // Screenshot handler
+  const handleScreenshot = async () => {
+    if (!treeContainerRef.current || isCapturing) return;
+    
+    setIsCapturing(true);
+    try {
+      // Find the actual tree SVG element for better capture
+      const svgElement = treeContainerRef.current.querySelector('svg');
+      const targetElement = svgElement?.parentElement || treeContainerRef.current;
+      
+      const canvas = await html2canvas(targetElement, {
+        backgroundColor: colors.bgCommonDefault,
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        width: targetElement.scrollWidth,
+        height: targetElement.scrollHeight,
+        windowWidth: targetElement.scrollWidth,
+        windowHeight: targetElement.scrollHeight,
+        onclone: (clonedDoc) => {
+          // Ensure the cloned element captures the full tree
+          const clonedElement = clonedDoc.querySelector('[class*="treeContainer"]') as HTMLElement;
+          if (clonedElement) {
+            clonedElement.style.overflow = 'visible';
+            clonedElement.style.width = 'auto';
+            clonedElement.style.height = 'auto';
+          }
+        }
+      });
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `apitable-rabbit-holes-${selectedSession || 'session'}-${new Date().toISOString().slice(0, 10)}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to capture screenshot:', error);
+    } finally {
+      setIsCapturing(false);
+    }
+  };
 
   useEffect(() => {
     // Center the tree when component mounts or container size changes
@@ -454,11 +507,21 @@ export const RabbitHolesPanel: React.FC<IRabbitHolesPanelProps> = ({
 
               {selectedSession ? (
           selectedSessionData ? (
-            <div className={styles.treeVisualization} ref={treeContainerRef}>
-              <h3 style={{ color: colors.textCommonPrimary }}>
-                Session Journey
-              </h3>
-            <div className={styles.treeContainer}>
+            <div className={styles.treeVisualization}>
+              <div ref={treeContainerRef}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <h3 style={{ color: colors.textCommonPrimary, margin: 0 }}>
+                    Session Journey
+                  </h3>
+                  <IconButton
+                    icon={DownloadOutlined}
+                    onClick={handleScreenshot}
+                    size="small"
+                    disabled={isCapturing}
+                    title="Download session journey"
+                  />
+                </div>
+                <div className={styles.treeContainer}>
               <svg style={{ width: 0, height: 0, position: 'absolute' }}>
                 <defs>
                   <marker
@@ -491,6 +554,7 @@ export const RabbitHolesPanel: React.FC<IRabbitHolesPanelProps> = ({
                 depthFactor={150}
               />
             </div>
+          </div>
           </div>
         ) : (
           <div className={styles.emptyState}>

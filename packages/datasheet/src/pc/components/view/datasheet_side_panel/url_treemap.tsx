@@ -20,8 +20,10 @@ import * as React from 'react';
 import { useState } from 'react';
 import { ResponsiveTreeMap } from '@nivo/treemap';
 import { ResponsiveCalendar } from '@nivo/calendar';
-import { useThemeColors } from '@apitable/components';
+import { useThemeColors, IconButton } from '@apitable/components';
 import { FieldType, ISegment } from '@apitable/core';
+import { DownloadOutlined } from '@apitable/icons';
+import html2canvas from 'html2canvas';
 import styles from './style.module.less';
 
 interface IURLTreemapProps {
@@ -49,6 +51,16 @@ interface IActiveHoursData {
 
 export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visibleColumns, getCellValue }) => {
   const colors = useThemeColors();
+  
+  // Refs for each visualization
+  const treemapRef = React.useRef<HTMLDivElement>(null);
+  const calendarRef = React.useRef<HTMLDivElement>(null);
+  const activeHoursRef = React.useRef<HTMLDivElement>(null);
+  
+  // State for capturing
+  const [capturingTreemap, setCapturingTreemap] = useState(false);
+  const [capturingCalendar, setCapturingCalendar] = useState(false);
+  const [capturingActiveHours, setCapturingActiveHours] = useState(false);
 
   // Extract domain from URL (between first and second dot)
   const extractDomain = (url: string): string => {
@@ -126,6 +138,44 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
       return null;
     } catch (e) {
       return null;
+    }
+  };
+
+  // Screenshot handler
+  const handleScreenshot = async (
+    ref: React.RefObject<HTMLDivElement>,
+    name: string,
+    setCapturing: (value: boolean) => void
+  ) => {
+    if (!ref.current) return;
+    
+    setCapturing(true);
+    try {
+      const canvas = await html2canvas(ref.current, {
+        backgroundColor: colors.bgCommonDefault,
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        windowWidth: ref.current.scrollWidth,
+        windowHeight: ref.current.scrollHeight,
+      });
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `apitable-${name}-${new Date().toISOString().slice(0, 10)}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to capture screenshot:', error);
+    } finally {
+      setCapturing(false);
     }
   };
 
@@ -240,9 +290,19 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
   return (
     <div className={styles.treemapContainer}>
       {/* URL Domain Distribution */}
-      <h3 className={styles.sectionTitle}>URL Domain Distribution</h3>
-      <div style={{ height: '350px', width: '100%', marginBottom: 32 }}>
-        <ResponsiveTreeMap
+      <div ref={treemapRef}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <h3 className={styles.sectionTitle}>URL Domain Distribution</h3>
+          <IconButton
+            icon={DownloadOutlined}
+            onClick={() => handleScreenshot(treemapRef, 'url-distribution', setCapturingTreemap)}
+            size="small"
+            disabled={capturingTreemap}
+            title="Download URL distribution chart"
+          />
+        </div>
+        <div style={{ height: '350px', width: '100%', marginBottom: 32 }}>
+          <ResponsiveTreeMap
           data={data}
           identity="name"
           value="value"
@@ -281,13 +341,24 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
           animate={true}
           motionConfig="wobbly"
         />
+        </div>
       </div>
 
       {/* Calendar View - Always shown for 2025 */}
-      <h3 className={styles.sectionTitle}>Activity Calendar (2025)</h3>
-      <div style={{ height: '180px', width: '100%', marginBottom: 24 }}>
-        {calendarData.length > 0 ? (
-          <ResponsiveCalendar
+      <div ref={calendarRef}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <h3 className={styles.sectionTitle}>Activity Calendar (2025)</h3>
+          <IconButton
+            icon={DownloadOutlined}
+            onClick={() => handleScreenshot(calendarRef, 'activity-calendar', setCapturingCalendar)}
+            size="small"
+            disabled={capturingCalendar}
+            title="Download activity calendar"
+          />
+        </div>
+        <div style={{ height: '180px', width: '100%', marginBottom: 24 }}>
+          {calendarData.length > 0 ? (
+            <ResponsiveCalendar
             data={calendarData}
             from="2025-01-02" // This prop ensures the calendar starts in 2025
             to="2025-12-31"   // This prop ensures the calendar ends in 2025
@@ -349,12 +420,23 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
             No date data found for 2025
           </div>
         )}
+        </div>
       </div>
 
       {/* Active Hours */}
-      <h3 className={styles.sectionTitle}>Active Hours (24h)</h3>
-      <div style={{ height: '150px', width: '100%', paddingBottom: 20 }}>
-        <div style={{ 
+      <div ref={activeHoursRef}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <h3 className={styles.sectionTitle}>Active Hours (24h)</h3>
+          <IconButton
+            icon={DownloadOutlined}
+            onClick={() => handleScreenshot(activeHoursRef, 'active-hours', setCapturingActiveHours)}
+            size="small"
+            disabled={capturingActiveHours}
+            title="Download active hours chart"
+          />
+        </div>
+        <div style={{ height: '150px', width: '100%', paddingBottom: 20 }}>
+          <div style={{ 
           display: 'flex', 
           height: '100%', 
           alignItems: 'end', 
@@ -407,6 +489,7 @@ export const URLTreemap: React.FC<IURLTreemapProps> = ({ rows, fieldMap, visible
             );
           })}
         </div>
+      </div>
       </div>
     </div>
   );

@@ -120,6 +120,7 @@ export const DatasheetSidePanel: React.FC = () => {
                   </div>
                 </div>
                 
+                {/* Action buttons */}
                 {/* Settings button - show on chat and biography tabs */}
                 {(activeTab === 'chat' || activeTab === 'biography') && (
                   <IconButton
